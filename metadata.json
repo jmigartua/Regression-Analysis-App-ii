@@ -1,0 +1,5 @@
+{
+  "name": "Linear Regression Analysis App",
+  "description": "A comprehensive web application for performing linear regression analysis. Upload a CSV, select variables, and get detailed statistical analysis with interactive, publication-quality plots powered by Gemini.",
+  "requestFramePermissions": []
+}
