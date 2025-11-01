@@ -1,7 +1,7 @@
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
-import { performLinearRegression } from './services/geminiService';
+import { calculateLinearRegression } from './utils/regression';
 import type { AnalysisResult, DataPoint } from './types';
 import { parseCSV, fileToText } from './utils/csvParser';
 
@@ -9,7 +9,6 @@ import { Header } from './components/Header';
 import { ActivityBar } from './components/ActivityBar';
 import { LeftSidebar } from './components/LeftSidebar';
 import { MainPanel } from './components/MainPanel';
-import { RightSidebar } from './components/RightSidebar';
 import { StatusBar } from './components/StatusBar';
 import { useAppContext } from './contexts/AppContext';
 
@@ -31,14 +30,12 @@ export default function App() {
   const [independentVar, setIndependentVar] = useState<string>('');
   const [dependentVar, setDependentVar] = useState<string>('');
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isPlotted, setIsPlotted] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
   const [leftPanelWidth, setLeftPanelWidth] = useState(256);
-  const [rightPanelWidth, setRightPanelWidth] = useState(288);
   
   const isResizingLeft = useRef(false);
-  const isResizingRight = useRef(false);
 
   const handleFileChange = useCallback(async (selectedFile: File | null) => {
     if (selectedFile) {
@@ -49,6 +46,7 @@ export default function App() {
       setFile(selectedFile);
       setError('');
       setAnalysisResult(null);
+      setIsPlotted(false);
       setData([]);
       setColumns([]);
       setIndependentVar('');
@@ -76,10 +74,11 @@ export default function App() {
         setData([]);
         setColumns([]);
         setAnalysisResult(null);
+        setIsPlotted(false);
     }
   }, [t]);
 
-  const handleRunAnalysis = useCallback(async () => {
+  const handlePlot = useCallback(async () => {
     if (!data.length || !independentVar || !dependentVar) {
       setError(t('error.missing_data'));
       return;
@@ -89,48 +88,34 @@ export default function App() {
       return;
     }
     
-    setIsLoading(true);
     setError('');
-    setAnalysisResult(null);
-
+    
     try {
-      const result = await performLinearRegression(data, independentVar, dependentVar);
+      const result = calculateLinearRegression(data, independentVar, dependentVar);
       setAnalysisResult(result);
+      setIsPlotted(true);
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : t('error.unknown');
+      const errorMessage = e instanceof Error ? e.message : t('error.unknown_analysis');
       setError(t('error.analysis_failed', { errorMessage }));
       console.error(e);
-    } finally {
-      setIsLoading(false);
+      setAnalysisResult(null);
+      setIsPlotted(false);
     }
   }, [data, independentVar, dependentVar, t]);
 
-  const combinedPlotData = useMemo(() => {
-    if (!analysisResult) return data;
-    return data.map((d, i) => ({
-      ...d,
-      residual: analysisResult.residuals[i],
-      predicted: analysisResult.regressionLine.find(p => p.x === d[independentVar])?.y,
-    }));
-  }, [analysisResult, data, independentVar]);
-  
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isResizingLeft.current) {
         setLeftPanelWidth(e.clientX - 48); // 48 is width of activity bar
-    }
-    if (isResizingRight.current) {
-        setRightPanelWidth(window.innerWidth - e.clientX);
     }
   }, []);
 
   const handleMouseUp = useCallback(() => {
     isResizingLeft.current = false;
-    isResizingRight.current = false;
     document.body.style.cursor = 'default';
   }, []);
 
   useEffect(() => {
-    if (isResizingLeft.current || isResizingRight.current) {
+    if (isResizingLeft.current) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -138,11 +123,11 @@ export default function App() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     }
-  }, [handleMouseMove, handleMouseUp, isResizingLeft.current, isResizingRight.current]);
+  }, [handleMouseMove, handleMouseUp, isResizingLeft.current]);
 
   return (
     <div className="flex flex-col h-screen bg-bg-default dark:bg-dark-bg font-sans text-text-primary dark:text-gray-300 text-sm antialiased">
-      <Header onRunAnalysis={handleRunAnalysis} isLoading={isLoading} canRun={!!(data.length > 0 && independentVar && dependentVar)} />
+      <Header />
       <div className="flex flex-grow overflow-hidden">
         <ActivityBar />
         <div style={{ width: `${leftPanelWidth}px` }} className="flex-shrink-0">
@@ -154,6 +139,7 @@ export default function App() {
             setIndependentVar={setIndependentVar}
             dependentVar={dependentVar}
             setDependentVar={setDependentVar}
+            onPlot={handlePlot}
           />
         </div>
         <div 
@@ -162,30 +148,14 @@ export default function App() {
         />
         <main className="flex-grow flex flex-col overflow-hidden">
           <MainPanel 
-            isLoading={isLoading}
+            isPlotted={isPlotted}
             analysisResult={analysisResult}
             data={data}
-            combinedData={combinedPlotData}
             independentVar={independentVar}
             dependentVar={dependentVar}
           />
-          <StatusBar rowCount={data.length} isLoading={isLoading} status={error ? 'Error' : 'Ready'}/>
+          <StatusBar rowCount={data.length} status={error ? 'Error' : 'Ready'}/>
         </main>
-        {analysisResult && (
-          <>
-            <div 
-                className="w-1 flex-shrink-0 bg-border dark:bg-dark-border cursor-col-resize hover:bg-accent"
-                onMouseDown={() => { isResizingRight.current = true; document.body.style.cursor = 'col-resize'; }}
-            />
-            <div style={{ width: `${rightPanelWidth}px` }} className="flex-shrink-0">
-              <RightSidebar 
-                result={analysisResult} 
-                independentVar={independentVar} 
-                dependentVar={dependentVar}
-              />
-            </div>
-          </>
-        )}
       </div>
       {error && <ErrorMessage message={error} onClose={() => setError('')} />}
     </div>

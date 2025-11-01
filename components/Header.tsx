@@ -1,17 +1,12 @@
 
 import React from 'react';
-import { Play, Loader2 } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
-interface HeaderProps {
-    onRunAnalysis: () => void;
-    isLoading: boolean;
-    canRun: boolean;
-}
+interface HeaderProps {}
 
-export const Header: React.FC<HeaderProps> = ({ onRunAnalysis, isLoading, canRun }) => {
+export const Header: React.FC<HeaderProps> = () => {
     const { t } = useAppContext();
     return (
         <header className="bg-header dark:bg-dark-header h-12 flex-shrink-0 flex items-center justify-between px-4 border-b border-border dark:border-dark-border z-20">
@@ -28,23 +23,6 @@ export const Header: React.FC<HeaderProps> = ({ onRunAnalysis, isLoading, canRun
             <div className="flex items-center space-x-2">
                 <LanguageSwitcher />
                 <ThemeSwitcher />
-                <button
-                    onClick={onRunAnalysis}
-                    disabled={isLoading || !canRun}
-                    className="flex items-center justify-center bg-accent hover:bg-blue-500 disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-4 rounded-md text-sm transition-colors duration-200"
-                >
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            {t('header.analyzing')}
-                        </>
-                    ) : (
-                        <>
-                            <Play className="w-4 h-4 mr-2" />
-                            {t('header.run')}
-                        </>
-                    )}
-                </button>
             </div>
         </header>
     );

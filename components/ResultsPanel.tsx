@@ -8,7 +8,7 @@ interface ResultsPanelProps {
 }
 
 const StatCard: React.FC<{ title: string; value: string; description: string }> = ({ title, value, description }) => (
-  <div className="bg-bg-default dark:bg-dark-bg p-3 rounded-md text-center shadow-md border border-border dark:border-dark-border">
+  <div className="bg-bg-default dark:bg-dark-bg p-3 rounded-md text-center shadow-sm border border-border dark:border-dark-border">
     <h4 className="text-xs font-medium text-text-secondary dark:text-gray-400 uppercase tracking-wider">{title}</h4>
     <p className="text-xl font-bold text-accent dark:text-accent mt-1">{value}</p>
     <p className="text-xs text-text-tertiary dark:text-gray-500 mt-1">{description}</p>
@@ -17,9 +17,6 @@ const StatCard: React.FC<{ title: string; value: string; description: string }> 
 
 export const ResultsPanel: React.FC<ResultsPanelProps> = ({ result }) => {
   const { t } = useAppContext();
-  const formatPValue = (value: number) => {
-    return value < 0.0001 ? "< 0.0001" : value.toFixed(4);
-  }
 
   return (
     <div>
@@ -41,19 +38,9 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ result }) => {
           description={t('results.slope_desc')}
         />
         <StatCard 
-          title={t('results.pvalue_slope')}
-          value={formatPValue(result.p_value_slope)} 
-          description={t('results.pvalue_slope_desc')}
-        />
-        <StatCard 
           title={t('results.intercept')}
           value={result.intercept.toFixed(4)} 
           description={t('results.intercept_desc')}
-        />
-        <StatCard 
-          title={t('results.pvalue_intercept')}
-          value={formatPValue(result.p_value_intercept)}
-          description={t('results.pvalue_intercept_desc')}
         />
       </div>
     </div>

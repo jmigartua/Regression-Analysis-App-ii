@@ -8,8 +8,6 @@ export interface AnalysisResult {
   intercept: number;
   rSquared: number;
   stdErr: number;
-  p_value_slope: number;
-  p_value_intercept: number;
   residuals: number[];
   regressionLine: { x: number; y: number }[];
 }

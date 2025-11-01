@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, BarChart2 } from 'lucide-react';
 import { FileUploader } from './FileUploader';
 import { VariableSelector } from './VariableSelector';
 import { useAppContext } from '../contexts/AppContext';
@@ -13,6 +13,7 @@ interface LeftSidebarProps {
   setIndependentVar: (value: string) => void;
   dependentVar: string;
   setDependentVar: (value: string) => void;
+  onPlot: () => void;
 }
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => {
@@ -53,6 +54,15 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
               dependentVar={props.dependentVar}
               setDependentVar={props.setDependentVar}
             />
+            <div className="mt-4">
+              <button
+                onClick={props.onPlot}
+                className="w-full flex items-center justify-center bg-accent hover:bg-blue-500 disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm transition-colors duration-200"
+              >
+                <BarChart2 className="w-4 h-4 mr-2" />
+                {t('sidebar.plot_button')}
+              </button>
+            </div>
           </Section>
         )}
       </div>
