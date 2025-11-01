@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line } from 'recharts';
 import type { DataPoint } from '../types';
 import { useAppContext } from '../contexts/AppContext';
@@ -7,7 +7,7 @@ import { useAppContext } from '../contexts/AppContext';
 interface PlotPanelProps {
   data: DataPoint[];
   combinedData: any[];
-  regressionLine: { x: number; y: number }[];
+  regressionLine?: { x: number; y: number }[];
   independentVar: string;
   dependentVar: string;
 }
@@ -22,7 +22,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <div className="bg-panel dark:bg-slate-900/80 p-3 border border-border dark:border-slate-700 rounded-md text-sm">
         {payload[0].dataKey && <p className="label text-text-primary dark:text-white">{`${payload[0].name} : ${payload[0].value}`}</p>}
         {payload[1]?.dataKey && <p className="label text-text-primary dark:text-white">{`${payload[1].name} : ${payload[1].value}`}</p>}
-        <p className="text-text-secondary dark:text-slate-400">{t('tooltip.residual')}: {data.residual?.toFixed(4)}</p>
+        {data.residual && <p className="text-text-secondary dark:text-slate-400">{t('tooltip.residual')}: {data.residual?.toFixed(4)}</p>}
       </div>
     );
   }
@@ -34,23 +34,33 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({ data, combinedData, regres
     const [activePlot, setActivePlot] = useState<PlotType>('regression');
     const [showRegressionLine, setShowRegressionLine] = useState(true);
     
+    const hasAnalysis = !!(regressionLine && regressionLine.length > 0 && combinedData[0]?.residual !== undefined);
+
+    useEffect(() => {
+        if (!hasAnalysis) {
+            setActivePlot('regression');
+        }
+    }, [hasAnalysis]);
+
     const tickColor = theme === 'dark' ? '#94a3b8' : '#6b7280';
     const gridColor = theme === 'dark' ? '#334155' : '#e5e7eb';
 
     return (
         <div className="flex flex-col h-full">
-            <div className="flex justify-center items-center space-x-2 mb-4 flex-shrink-0">
-                <button onClick={() => setActivePlot('regression')} className={`px-4 py-2 text-sm rounded-md ${activePlot === 'regression' ? 'bg-brand-primary text-white' : 'bg-sidebar dark:bg-slate-700 hover:bg-black/10 dark:hover:bg-slate-600'}`}>{t('plot.regression')}</button>
-                <button onClick={() => setActivePlot('residual')} className={`px-4 py-2 text-sm rounded-md ${activePlot === 'residual' ? 'bg-brand-primary text-white' : 'bg-sidebar dark:bg-slate-700 hover:bg-black/10 dark:hover:bg-slate-600'}`}>{t('plot.residual')}</button>
-                {activePlot === 'regression' && (
-                  <button onClick={() => setShowRegressionLine(!showRegressionLine)} className="px-4 py-2 text-sm rounded-md bg-sidebar dark:bg-slate-700 hover:bg-black/10 dark:hover:bg-slate-600">
-                    {showRegressionLine ? t('plot.hide_line') : t('plot.show_line')}
-                  </button>
-                )}
-            </div>
+            {hasAnalysis && (
+                <div className="flex justify-center items-center space-x-2 mb-4 flex-shrink-0">
+                    <button onClick={() => setActivePlot('regression')} className={`px-4 py-2 text-sm rounded-md ${activePlot === 'regression' ? 'bg-brand-primary text-white' : 'bg-sidebar dark:bg-slate-700 hover:bg-black/10 dark:hover:bg-slate-600'}`}>{t('plot.regression')}</button>
+                    <button onClick={() => setActivePlot('residual')} className={`px-4 py-2 text-sm rounded-md ${activePlot === 'residual' ? 'bg-brand-primary text-white' : 'bg-sidebar dark:bg-slate-700 hover:bg-black/10 dark:hover:bg-slate-600'}`}>{t('plot.residual')}</button>
+                    {activePlot === 'regression' && (
+                    <button onClick={() => setShowRegressionLine(!showRegressionLine)} className="px-4 py-2 text-sm rounded-md bg-sidebar dark:bg-slate-700 hover:bg-black/10 dark:hover:bg-slate-600">
+                        {showRegressionLine ? t('plot.hide_line') : t('plot.show_line')}
+                    </button>
+                    )}
+                </div>
+            )}
             <div className="w-full flex-grow">
                 <ResponsiveContainer width="100%" height="100%">
-                    {activePlot === 'regression' ? (
+                    {(!hasAnalysis || activePlot === 'regression') ? (
                         <ScatterChart margin={{ top: 5, right: 20, bottom: 20, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                             <XAxis type="number" dataKey={independentVar} name={independentVar} unit="" stroke={tickColor} domain={['dataMin', 'dataMax']} />
@@ -58,7 +68,7 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({ data, combinedData, regres
                             <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
                             <Legend />
                             <Scatter name={t('plot.observations')} data={data} fill="#4f46e5" shape="circle" />
-                            {showRegressionLine && regressionLine && regressionLine.length > 0 && <Line
+                            {hasAnalysis && showRegressionLine && <Line
                                 name={t('plot.regression_line')}
                                 type="monotone"
                                 dataKey="y"

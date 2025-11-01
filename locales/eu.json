@@ -28,6 +28,8 @@
   "main.plots": "Grafikoak",
   "main.run_analysis_prompt": "Exekutatu azterketa grafikoak sortzeko.",
   "main.no_data": "Ez dago daturik erakusteko.",
+  "main.select_vars_title": "Ikusi Zure Datuak",
+  "main.select_vars_description": "Hautatu aldagai aske bat (X) eta mendeko bat (Y) esploratzaile panelean sakabanatze-diagrama bat sortzeko.",
   "plot.regression": "Erregresio Grafikoa",
   "plot.residual": "Hondar Grafikoa",
   "plot.observations": "Behaketak",

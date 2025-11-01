@@ -28,6 +28,8 @@
   "main.plots": "Gráficos",
   "main.run_analysis_prompt": "Ejecuta el análisis para generar gráficos.",
   "main.no_data": "No hay datos para mostrar.",
+  "main.select_vars_title": "Visualiza Tus Datos",
+  "main.select_vars_description": "Selecciona una variable independiente (X) y dependiente (Y) en el panel explorador para generar un gráfico de dispersión.",
   "plot.regression": "Gráfico de Regresión",
   "plot.residual": "Gráfico de Residuos",
   "plot.observations": "Observaciones",

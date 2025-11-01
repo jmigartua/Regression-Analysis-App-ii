@@ -33,7 +33,6 @@ export default function App() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'data' | 'plot'>('data');
 
   const [leftPanelWidth, setLeftPanelWidth] = useState(256);
   const [rightPanelWidth, setRightPanelWidth] = useState(288);
@@ -54,7 +53,6 @@ export default function App() {
       setColumns([]);
       setIndependentVar('');
       setDependentVar('');
-      setActiveTab('data');
 
       try {
         const textContent = await fileToText(selectedFile);
@@ -98,7 +96,6 @@ export default function App() {
     try {
       const result = await performLinearRegression(data, independentVar, dependentVar);
       setAnalysisResult(result);
-      setActiveTab('plot');
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : t('error.unknown');
       setError(t('error.analysis_failed', { errorMessage }));
@@ -145,7 +142,7 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen bg-bg-default dark:bg-dark-bg font-sans text-text-primary dark:text-gray-300 text-sm antialiased">
-      <Header onRunAnalysis={handleRunAnalysis} isLoading={isLoading} canRun={data.length > 0} />
+      <Header onRunAnalysis={handleRunAnalysis} isLoading={isLoading} canRun={!!(data.length > 0 && independentVar && dependentVar)} />
       <div className="flex flex-grow overflow-hidden">
         <ActivityBar />
         <div style={{ width: `${leftPanelWidth}px` }} className="flex-shrink-0">
@@ -171,8 +168,6 @@ export default function App() {
             combinedData={combinedPlotData}
             independentVar={independentVar}
             dependentVar={dependentVar}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
           />
           <StatusBar rowCount={data.length} isLoading={isLoading} status={error ? 'Error' : 'Ready'}/>
         </main>

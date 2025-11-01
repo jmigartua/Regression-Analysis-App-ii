@@ -28,6 +28,8 @@
   "main.plots": "Plots",
   "main.run_analysis_prompt": "Run analysis to generate plots.",
   "main.no_data": "No data to display.",
+  "main.select_vars_title": "Visualize Your Data",
+  "main.select_vars_description": "Select an independent (X) and dependent (Y) variable in the explorer panel to generate a scatter plot.",
   "plot.regression": "Regression Plot",
   "plot.residual": "Residual Plot",
   "plot.observations": "Observations",
