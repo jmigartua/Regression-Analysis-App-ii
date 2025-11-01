@@ -34,6 +34,8 @@
   "plot.regression_line": "Regression Line",
   "plot.predicted_values": "Predicted Values",
   "plot.residuals": "Residuals",
+  "plot.hide_line": "Hide Line",
+  "plot.show_line": "Show Line",
   "tooltip.residual": "Residual",
   "right_sidebar.analysis": "Analysis",
   "right_sidebar.export": "Export",

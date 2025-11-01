@@ -34,6 +34,8 @@
   "plot.regression_line": "Erregresio Lerroa",
   "plot.predicted_values": "Aurreikusitako Balioak",
   "plot.residuals": "Hondarrak",
+  "plot.hide_line": "Ezkutatu Lerroa",
+  "plot.show_line": "Erakutsi Lerroa",
   "tooltip.residual": "Hondarra",
   "right_sidebar.analysis": "Azterketa",
   "right_sidebar.export": "Esportatu",

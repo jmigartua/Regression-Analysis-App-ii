@@ -34,6 +34,8 @@
   "plot.regression_line": "Línea de Regresión",
   "plot.predicted_values": "Valores Predichos",
   "plot.residuals": "Residuos",
+  "plot.hide_line": "Ocultar Línea",
+  "plot.show_line": "Mostrar Línea",
   "tooltip.residual": "Residuo",
   "right_sidebar.analysis": "Análisis",
   "right_sidebar.export": "Exportar",

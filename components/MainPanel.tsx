@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { LayoutGrid, Loader2, Table, BarChartHorizontal } from 'lucide-react';
 import { PlotPanel } from './PlotPanel';
 import { DataTable } from './DataTable';
@@ -49,7 +49,42 @@ const TabButton: React.FC<{ active: boolean; onClick: () => void; children: Reac
 
 export const MainPanel: React.FC<MainPanelProps> = ({ isLoading, analysisResult, data, combinedData, independentVar, dependentVar, activeTab, setActiveTab }) => {
     const { t } = useAppContext();
-    
+    const mainPanelRef = useRef<HTMLDivElement>(null);
+    const [rightPartWidth, setRightPartWidth] = useState(400);
+    const isResizing = useRef(false);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+        isResizing.current = true;
+        document.body.style.cursor = 'col-resize';
+    };
+
+    const handleMouseUp = useCallback(() => {
+        isResizing.current = false;
+        document.body.style.cursor = 'default';
+    }, []);
+
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+        if (isResizing.current && mainPanelRef.current) {
+            const parentRect = mainPanelRef.current.getBoundingClientRect();
+            const newWidth = parentRect.right - e.clientX;
+            if (newWidth > 200 && newWidth < parentRect.width - 300) { // Add constraints
+                setRightPartWidth(newWidth);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isResizing.current) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        }
+    }, [handleMouseMove, handleMouseUp, isResizing.current]);
+
     if (isLoading) {
         return <div className="flex-grow overflow-y-auto p-6 bg-panel/80 dark:bg-dark-panel/80"><LoadingSpinner /></div>;
     }
@@ -68,19 +103,30 @@ export const MainPanel: React.FC<MainPanelProps> = ({ isLoading, analysisResult,
                     <BarChartHorizontal className="w-4 h-4 mr-2" /> {t('main.plots')}
                 </TabButton>
             </div>
-            <div className="flex-grow overflow-y-auto p-4">
+            <div ref={mainPanelRef} className="flex-grow overflow-auto p-4">
                 {activeTab === 'data' && (
                     <DataTable data={data} />
                 )}
                 {activeTab === 'plot' && (
                     analysisResult ? (
-                        <PlotPanel
-                            data={data}
-                            combinedData={combinedData}
-                            regressionLine={analysisResult.regressionLine}
-                            independentVar={independentVar}
-                            dependentVar={dependentVar}
-                        />
+                         <div className="flex h-full w-full">
+                            <div className="flex-grow h-full" style={{ width: `calc(100% - ${rightPartWidth}px - 4px)` }}>
+                                <PlotPanel
+                                    data={data}
+                                    combinedData={combinedData}
+                                    regressionLine={analysisResult.regressionLine}
+                                    independentVar={independentVar}
+                                    dependentVar={dependentVar}
+                                />
+                            </div>
+                            <div
+                                className="w-1 flex-shrink-0 bg-border dark:bg-dark-border cursor-col-resize hover:bg-accent"
+                                onMouseDown={handleMouseDown}
+                            />
+                            <div className="flex-shrink-0 h-full" style={{ width: `${rightPartWidth}px` }}>
+                                <DataTable data={combinedData} />
+                            </div>
+                        </div>
                     ) : (
                         <div className="flex items-center justify-center h-full text-text-tertiary dark:text-gray-500">
                             <p>{t('main.run_analysis_prompt')}</p>

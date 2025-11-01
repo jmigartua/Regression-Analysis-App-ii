@@ -18,7 +18,7 @@ const IconWrapper: React.FC<{ children: React.ReactNode; active?: boolean; toolt
 export const ActivityBar: React.FC = () => {
     const { t } = useAppContext();
     return (
-        <aside className="w-12 bg-sidebar dark:bg-dark-header flex-shrink-0 flex flex-col items-center py-2 border-r border-border dark:border-dark-border space-y-2">
+        <aside className="w-12 bg-activity-bar dark:bg-dark-activity-bar flex-shrink-0 flex flex-col items-center py-2 border-r border-border dark:border-dark-border space-y-2">
             <IconWrapper active tooltip={t('activitybar.explorer')}>
                 <Files className="w-6 h-6" />
             </IconWrapper>
