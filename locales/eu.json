@@ -28,6 +28,7 @@
   "main.plot_placeholder_description": "Hautatu zure aldagaiak eta egin klik 'Datuak Marraztu' botoian esploratzailean zure datuak ikusteko.",
   "tabs.analysis_fitting": "Analisia eta Doikuntza",
   "tabs.simulation": "Simulazioa",
+  "tabs.close_tab_tooltip": "Itxi Fitxa",
   "simulation.title": "Simulazio Panela",
   "simulation.description": "Simulazio-ingurunea hemen egongo da eskuragarri. Zure datuekin modeloak probatu eta eszenatokiak exekutatu ahal izango dituzu.",
   "plot.observations": "Behaketak",

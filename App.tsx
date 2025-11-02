@@ -2,14 +2,16 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { AlertTriangle, X, LayoutGrid } from 'lucide-react';
 import { calculateLinearRegression } from './utils/regression';
-import type { AnalysisResult, DataPoint } from './types';
+import type { AnalysisResult, DataPoint, FileState } from './types';
 import { parseCSV, fileToText } from './utils/csvParser';
+import { FileContextProvider } from './contexts/FileContext';
 
 import { Header } from './components/Header';
 import { ActivityBar } from './components/ActivityBar';
 import { LeftSidebar } from './components/LeftSidebar';
 import { StatusBar } from './components/StatusBar';
 import { FileWorkspace } from './components/FileWorkspace';
+import { FileTabs } from './components/FileTabs';
 import { useAppContext } from './contexts/AppContext';
 
 const ErrorMessage: React.FC<{ message: string; onClose: () => void }> = ({ message, onClose }) => (
@@ -22,241 +24,224 @@ const ErrorMessage: React.FC<{ message: string; onClose: () => void }> = ({ mess
   </div>
 );
 
+const areAnalysisResultsNumericallyEqual = (res1: AnalysisResult | null, res2: AnalysisResult | null): boolean => {
+    if (res1 === res2) return true;
+    if (!res1 || !res2) return false;
+
+    const tolerance = 1e-9;
+
+    return (
+        Math.abs(res1.slope - res2.slope) < tolerance &&
+        Math.abs(res1.intercept - res2.intercept) < tolerance &&
+        Math.abs(res1.rSquared - res2.rSquared) < tolerance &&
+        Math.abs(res1.stdErr - res2.stdErr) < tolerance &&
+        Math.abs(res1.stdErrSlope - res2.stdErrSlope) < tolerance &&
+        // FIX: Added missing comparison with tolerance to return a boolean.
+        Math.abs(res1.stdErrIntercept - res2.stdErrIntercept) < tolerance
+    );
+};
+
 export default function App() {
   const { t } = useAppContext();
-  const [file, setFile] = useState<File | null>(null);
-  const [data, setData] = useState<DataPoint[]>([]);
-  const [columns, setColumns] = useState<string[]>([]);
-  const [independentVar, setIndependentVar] = useState<string>('');
-  const [dependentVar, setDependentVar] = useState<string>('');
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [isPlotted, setIsPlotted] = useState<boolean>(false);
+  const [files, setFiles] = useState<Record<string, FileState>>({});
+  const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
-  const [selectedRowIndices, setSelectedRowIndices] = useState<Set<number>>(new Set());
-  const [activeTab, setActiveTab] = useState<'analysis' | 'simulation'>('analysis');
-
   const [leftPanelWidth, setLeftPanelWidth] = useState(256);
+
+  const activeFileState = useMemo(() => {
+    if (!activeFileId || !files[activeFileId]) return null;
+    return files[activeFileId];
+  }, [files, activeFileId]);
   
-  const handleFileChange = useCallback(async (selectedFile: File | null) => {
-    if (selectedFile) {
-      if (selectedFile.type !== 'text/csv') {
-        setError(t('error.invalid_file_type'));
-        return;
+  const handleAddNewFile = useCallback(async (selectedFile: File) => {
+    if (selectedFile.type !== 'text/csv') {
+      setError(t('error.invalid_file_type'));
+      return;
+    }
+    
+    setError('');
+    
+    try {
+      const textContent = await fileToText(selectedFile);
+      const { data: parsedData, columns: parsedColumns } = parseCSV(textContent);
+      
+      if(parsedData.length === 0 || parsedColumns.length < 2) {
+          setError(t('error.empty_csv'));
+          return;
       }
-      setFile(selectedFile);
-      setError('');
-      setAnalysisResult(null);
-      setIsPlotted(false);
-      setData([]);
-      setColumns([]);
-      setIndependentVar('');
-      setDependentVar('');
-      setActiveTab('analysis');
-
-      try {
-        const textContent = await fileToText(selectedFile);
-        const { data: parsedData, columns: parsedColumns } = parseCSV(textContent);
-        
-        if(parsedData.length === 0 || parsedColumns.length < 2) {
-            setError(t('error.empty_csv'));
-            return;
+      
+      const newFileId = Date.now().toString();
+      const newFileState: FileState = {
+        id: newFileId,
+        file: selectedFile,
+        data: parsedData,
+        columns: parsedColumns,
+        independentVar: parsedColumns[0],
+        dependentVar: parsedColumns[1],
+        analysisResult: null,
+        isPlotted: false,
+        selectedRowIndices: new Set(parsedData.map((_, i) => i)),
+        activeWorkspaceTab: 'analysis',
+        uiState: {
+          tablePanelWidth: 400,
+          plotExplorerWidth: 256,
+          topPanelHeight: 60,
+          selectedPlotIndices: new Set(),
+          activePlotTool: null,
+          xAxisDomain: ['dataMin', 'dataMax'],
+          yAxisDomain: ['dataMin', 'dataMax'],
         }
+      };
 
-        setData(parsedData);
-        setColumns(parsedColumns);
-        setIndependentVar(parsedColumns[0]);
-        setDependentVar(parsedColumns[1]);
-        setSelectedRowIndices(new Set(parsedData.map((_, i) => i)));
-      } catch (e) {
-        setError(t('error.parse_failed'));
-        console.error(e);
-      }
-    } else {
-        setFile(null);
-        setData([]);
-        setColumns([]);
-        setAnalysisResult(null);
-        setIsPlotted(false);
-        setSelectedRowIndices(new Set<number>());
+      setFiles(prev => ({ ...prev, [newFileId]: newFileState }));
+      setActiveFileId(newFileId);
+
+    } catch (e) {
+      setError(t('error.parse_failed'));
+      console.error(e);
     }
   }, [t]);
-  
-  const activeData = useMemo(() => data.filter((_, index) => selectedRowIndices.has(index)), [data, selectedRowIndices]);
 
+  const handleCloseFile = useCallback((fileIdToClose: string) => {
+    setFiles(currentFiles => {
+      const newFiles = { ...currentFiles };
+      delete newFiles[fileIdToClose];
+      return newFiles;
+    });
+
+    if (activeFileId === fileIdToClose) {
+      const remainingFileIds = Object.keys(files).filter(id => id !== fileIdToClose);
+      if (remainingFileIds.length > 1) { // Check length > 1 because files object isn't updated yet
+        // A simple approach: activate the first remaining file.
+        const fileKeys = Object.keys(files);
+        const newActiveId = fileKeys.find(id => id !== fileIdToClose);
+        setActiveFileId(newActiveId || null);
+      } else {
+        setActiveFileId(null);
+      }
+    }
+  }, [activeFileId, files]);
+  
+  const activeData = useMemo(() => {
+    if (!activeFileState) return [];
+    return activeFileState.data.filter((_, index) => activeFileState.selectedRowIndices.has(index));
+  }, [activeFileState]);
+
+  const updateFileState = useCallback((fileId: string | null, updates: Partial<FileState>) => {
+    if (!fileId) return;
+    setFiles(currentFiles => {
+        const fileToUpdate = currentFiles[fileId];
+        if (!fileToUpdate) return currentFiles;
+
+        const updatedFile = { ...fileToUpdate, ...updates };
+        
+        if (updates.uiState) {
+            updatedFile.uiState = { ...fileToUpdate.uiState, ...updates.uiState };
+        }
+        
+        return { ...currentFiles, [fileId]: updatedFile };
+    });
+  }, []);
+
+  // This effect performs the regression analysis on the active file
   useEffect(() => {
-    if (!isPlotted || activeData.length < 2 || !independentVar || !dependentVar) {
-      if (isPlotted) { 
-        setAnalysisResult(null);
+    if (!activeFileId || !activeFileState) return;
+
+    if (!activeFileState.isPlotted || activeData.length < 2 || !activeFileState.independentVar || !activeFileState.dependentVar) {
+      if (activeFileState.isPlotted && activeFileState.analysisResult !== null) {
+         updateFileState(activeFileId, { analysisResult: null });
       }
       return;
     }
 
-    if (independentVar === dependentVar) {
+    if (activeFileState.independentVar === activeFileState.dependentVar) {
       setError(t('error.same_variables'));
-      setAnalysisResult(null);
+      if (activeFileState.analysisResult !== null) {
+        updateFileState(activeFileId, { analysisResult: null });
+      }
       return;
     }
     
     try {
-      const result = calculateLinearRegression(activeData, independentVar, dependentVar);
-      setAnalysisResult(result);
+      const result = calculateLinearRegression(activeData, activeFileState.independentVar, activeFileState.dependentVar);
+      if (!areAnalysisResultsNumericallyEqual(activeFileState.analysisResult, result)) {
+        updateFileState(activeFileId, { analysisResult: result });
+      }
       setError(''); // Clear previous errors
     } catch (e) {
       const errorCode = e instanceof Error ? e.message : 'UNKNOWN';
       let errorMessage = '';
 
       switch (errorCode) {
-        case 'NOT_ENOUGH_DATA':
-          errorMessage = t('error.not_enough_data');
-          break;
-        case 'IDENTICAL_X_VALUES':
-          errorMessage = t('error.identical_x');
-          break;
-        default:
-          errorMessage = t('error.analysis_failed', { errorMessage: errorCode });
+        case 'NOT_ENOUGH_DATA': errorMessage = t('error.not_enough_data'); break;
+        case 'IDENTICAL_X_VALUES': errorMessage = t('error.identical_x'); break;
+        default: errorMessage = t('error.analysis_failed', { errorMessage: errorCode });
       }
       
       setError(errorMessage);
       console.error(e);
-      setAnalysisResult(null);
-    }
-  }, [activeData, independentVar, dependentVar, isPlotted, t]);
-
-
-  const handlePlot = useCallback(() => {
-    if (!data.length || !independentVar || !dependentVar) {
-      setError(t('error.missing_data'));
-      return;
-    }
-    if (independentVar === dependentVar) {
-      setError(t('error.same_variables'));
-      return;
-    }
-    
-    setError('');
-    setIsPlotted(true);
-    // The useEffect will now run the analysis
-  }, [data.length, independentVar, dependentVar]);
-  
-  const handleCellChange = useCallback((rowIndex: number, column: string, value: any) => {
-    setData(currentData => {
-      const newData = [...currentData];
-      const newRow = { ...newData[rowIndex], [column]: value };
-      newData[rowIndex] = newRow;
-      return newData;
-    });
-  }, []);
-
-  const handleColumnRename = useCallback((oldName: string, newName: string) => {
-    if (oldName === newName || columns.includes(newName)) {
-      if (oldName !== newName) {
-        setError(t('table.duplicate_column_error', { columnName: newName }));
+      if (activeFileState.analysisResult !== null) {
+        updateFileState(activeFileId, { analysisResult: null });
       }
-      return; 
     }
+  }, [activeData, activeFileState, activeFileId, t, updateFileState]);
+
+  const tableData = useMemo(() => {
+    if (!activeFileState) return [];
     
-    setColumns(currentCols => currentCols.map(c => c === oldName ? newName : c));
-    
-    setData(currentData => currentData.map(row => {
-        const newRow = { ...row };
-        if (Object.prototype.hasOwnProperty.call(newRow, oldName)) {
-            newRow[newName] = newRow[oldName];
-            delete newRow[oldName];
+    const { data, analysisResult, isPlotted, selectedRowIndices, independentVar, dependentVar } = activeFileState;
+
+    if (!analysisResult || !isPlotted) {
+        return data;
+    }
+
+    const originalToActiveIndexMap = new Map<number, number>();
+    let currentActiveIndex = 0;
+    data.forEach((_, index) => {
+        if (selectedRowIndices.has(index)) {
+            originalToActiveIndexMap.set(index, currentActiveIndex++);
         }
-        return newRow;
-    }));
-
-    if (independentVar === oldName) setIndependentVar(newName);
-    if (dependentVar === oldName) setDependentVar(newName);
-
-  }, [columns, independentVar, dependentVar, t]);
-
-  const handleAddColumn = useCallback(() => {
-    const newColumnName = prompt(t('table.new_column_prompt'));
-    if (newColumnName && !columns.includes(newColumnName)) {
-      setColumns(currentCols => [...currentCols, newColumnName]);
-      setData(currentData => currentData.map(row => ({ ...row, [newColumnName]: 0 })));
-    } else if (newColumnName) {
-      setError(t('table.duplicate_column_error', { columnName: newColumnName }));
-    }
-  }, [columns, t]);
-
-  const handleDeleteColumn = useCallback((columnToDelete: string) => {
-    setColumns(currentCols => currentCols.filter(c => c !== columnToDelete));
-    setData(currentData => currentData.map(row => {
-      const newRow = { ...row };
-      delete newRow[columnToDelete];
-      return newRow;
-    }));
-    
-    if (independentVar === columnToDelete) setIndependentVar('');
-    if (dependentVar === columnToDelete) setDependentVar('');
-  }, [independentVar, dependentVar]);
-
-  const handleAddRow = useCallback(() => {
-    setData(currentData => {
-      const newData = [...currentData];
-      const newRow = columns.reduce((acc, col) => ({ ...acc, [col]: 0 }), {});
-      newData.push(newRow);
-      
-      setSelectedRowIndices(currentIndices => {
-        const newIndices = new Set(currentIndices);
-        newIndices.add(newData.length - 1); // Select the new row
-        return newIndices;
-      });
-
-      return newData;
     });
-  }, [columns]);
-  
-  const handleDeleteRow = useCallback((rowIndex: number) => {
-    setData(currentData => currentData.filter((_, i) => i !== rowIndex));
-    setSelectedRowIndices(currentIndices => {
-        const newIndices = new Set<number>();
-        currentIndices.forEach(i => {
-            if (i < rowIndex) newIndices.add(i);
-            else if (i > rowIndex) newIndices.add(i - 1);
-        });
-        return newIndices;
-    });
-  }, []);
 
-    const handleDeleteSelectedRows = useCallback(() => {
-        if (selectedRowIndices.size === 0) return;
-
-        // Fix: Explicitly type `a` and `b` as numbers to resolve TS inference issue.
-        const indicesToDelete = Array.from(selectedRowIndices).sort((a: number, b: number) => b - a);
-        
-        setData(currentData => {
-            const newData = [...currentData];
-            for (const index of indicesToDelete) {
-                newData.splice(index, 1);
+    return data.map((row, index) => {
+        if (originalToActiveIndexMap.has(index)) {
+            const activeIndex = originalToActiveIndexMap.get(index)!;
+            const x = row[independentVar];
+            if (typeof x === 'number' && typeof row[dependentVar] === 'number' && analysisResult.residuals.length > activeIndex) {
+                const predicted = analysisResult.intercept + analysisResult.slope * x;
+                const residual = analysisResult.residuals[activeIndex];
+                return { ...row, predicted, residual };
             }
-            return newData;
-        });
-        
-        setSelectedRowIndices(new Set<number>());
-    }, [selectedRowIndices]);
-
-  const handleRowSelectionChange = useCallback((rowIndex: number, isSelected: boolean) => {
-    setSelectedRowIndices(currentIndices => {
-        const newIndices = new Set(currentIndices);
-        if (isSelected) {
-            newIndices.add(rowIndex);
-        } else {
-            newIndices.delete(rowIndex);
         }
-        return newIndices;
+        return { ...row, predicted: undefined, residual: undefined };
     });
-  }, []);
+  }, [activeFileState]);
 
-  const handleSelectAllRows = useCallback((selectAll: boolean) => {
-      if (selectAll) {
-          setSelectedRowIndices(new Set(data.map((_, i) => i)));
-      } else {
-          setSelectedRowIndices(new Set<number>());
-      }
-  }, [data]);
+  const handleCellChange = (rowIndex: number, column: string, value: any) => {
+    if (!activeFileState) return;
+    const newData = [...activeFileState.data];
+    newData[rowIndex] = { ...newData[rowIndex], [column]: value };
+    updateFileState(activeFileId, { data: newData });
+  };
+
+  const handleDeleteSelectedRows = () => {
+    if (!activeFileState || activeFileState.selectedRowIndices.size === 0) return;
+    const indicesToDelete = Array.from(activeFileState.selectedRowIndices).sort((a: number, b: number) => b - a);
+    const newData = activeFileState.data.filter((_, index) => !activeFileState.selectedRowIndices.has(index));
+    updateFileState(activeFileId, { data: newData, selectedRowIndices: new Set() });
+  };
+  
+  // Create other handlers that use `updateFileState`...
+  // These will be passed in the context
+   const contextValue = useMemo(() => ({
+    fileState: activeFileState,
+    tableData: tableData,
+    updateFileState: (updates: Partial<FileState>) => updateFileState(activeFileId, updates),
+    handleCellChange: handleCellChange,
+    handleDeleteSelectedRows: handleDeleteSelectedRows,
+    // Add other handlers here as they are refactored
+  }), [activeFileState, activeFileId, tableData, updateFileState]);
+
 
   const handleMouseDownLeft = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -278,67 +263,53 @@ export default function App() {
     document.addEventListener('mouseup', handleMouseUp);
   }, []);
 
-  const WorkspacePlaceholder: React.FC = () => {
-    const { t } = useAppContext();
-    return (
+  const WorkspacePlaceholder: React.FC = () => (
     <div className="flex flex-col items-center justify-center h-full text-center text-text-tertiary dark:text-gray-500">
         <LayoutGrid className="w-16 h-16 mb-4" />
         <h3 className="text-xl font-semibold text-text-secondary dark:text-gray-400">{t('main.workspace_title')}</h3>
         <p className="mt-2 max-w-sm">{t('main.workspace_description')}</p>
     </div>
-  )};
+  );
 
 
   return (
     <div className="flex flex-col h-screen bg-bg-default dark:bg-dark-bg font-sans text-text-primary dark:text-gray-300 text-sm antialiased">
       <Header />
-      <div className="flex flex-grow overflow-hidden">
-        <ActivityBar />
-        <div style={{ width: `${leftPanelWidth}px` }} className="flex-shrink-0">
-          <LeftSidebar 
-            onFileChange={handleFileChange} 
-            file={file}
-            columns={columns}
-            independentVar={independentVar}
-            setIndependentVar={setIndependentVar}
-            dependentVar={dependentVar}
-            setDependentVar={setDependentVar}
-            onPlot={handlePlot}
-          />
+      <FileContextProvider value={contextValue}>
+        <div className="flex flex-grow overflow-hidden">
+          <ActivityBar />
+          <div style={{ width: `${leftPanelWidth}px` }} className="flex-shrink-0">
+            <LeftSidebar 
+              onFileAdd={handleAddNewFile} 
+              files={files}
+              activeFileId={activeFileId}
+              setActiveFileId={setActiveFileId}
+            />
+          </div>
+          <div 
+              className="w-1.5 flex-shrink-0 bg-border dark:bg-dark-border cursor-col-resize group flex items-center justify-center"
+              onMouseDown={handleMouseDownLeft}
+          >
+              <div className="h-8 w-1 bg-gray-300 dark:bg-gray-600 rounded-full group-hover:bg-accent transition-colors"></div>
+          </div>
+          <main className="flex-grow flex flex-col overflow-hidden">
+            {activeFileId && activeFileState ? (
+              <div className="flex flex-col flex-grow overflow-hidden">
+                <FileTabs
+                  files={files}
+                  activeFileId={activeFileId}
+                  onSelectTab={setActiveFileId}
+                  onCloseTab={handleCloseFile}
+                />
+                <FileWorkspace key={activeFileId} />
+              </div>
+            ) : (
+              <div className="flex-grow overflow-y-auto p-6"><WorkspacePlaceholder /></div>
+            )}
+            <StatusBar rowCount={activeFileState?.data.length ?? 0} status={error ? 'Error' : 'Ready'}/>
+          </main>
         </div>
-        <div 
-            className="w-1.5 flex-shrink-0 bg-border dark:bg-dark-border cursor-col-resize group flex items-center justify-center"
-            onMouseDown={handleMouseDownLeft}
-        >
-            <div className="h-8 w-1 bg-gray-300 dark:bg-gray-600 rounded-full group-hover:bg-accent transition-colors"></div>
-        </div>
-        <main className="flex-grow flex flex-col overflow-hidden">
-          {file ? (
-             <FileWorkspace
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                isPlotted={isPlotted}
-                analysisResult={analysisResult}
-                data={data}
-                selectedRowIndices={selectedRowIndices}
-                independentVar={independentVar}
-                dependentVar={dependentVar}
-                onCellChange={handleCellChange}
-                onColumnRename={handleColumnRename}
-                onAddColumn={handleAddColumn}
-                onDeleteColumn={handleDeleteColumn}
-                onAddRow={handleAddRow}
-                onDeleteRow={handleDeleteRow}
-                onDeleteSelectedRows={handleDeleteSelectedRows}
-                onRowSelectionChange={handleRowSelectionChange}
-                onSelectAllRows={handleSelectAllRows}
-             />
-          ) : (
-            <div className="flex-grow overflow-y-auto p-6"><WorkspacePlaceholder /></div>
-          )}
-          <StatusBar rowCount={data.length} status={error ? 'Error' : 'Ready'}/>
-        </main>
-      </div>
+      </FileContextProvider>
       {error && <ErrorMessage message={error} onClose={() => setError('')} />}
     </div>
   );

@@ -1,30 +1,14 @@
-import React, { useRef, useState, useCallback, useMemo } from 'react';
-import { LayoutGrid, BarChart2 } from 'lucide-react';
+
+import React, { useState, useRef, useCallback, useMemo } from 'react';
+import { BarChart2 } from 'lucide-react';
 import { PlotPanel } from './PlotPanel';
 import { DataTable } from './DataTable';
 import { AnalysisPanel } from './AnalysisPanel';
 import { PlotExplorerPanel } from './PlotExplorerPanel';
-import { PlotToolbar, PlotTool } from './PlotToolbar';
-import type { AnalysisResult, DataPoint } from '../types';
+import { PlotToolbar } from './PlotToolbar';
+import type { DataPoint } from '../types';
 import { useAppContext } from '../contexts/AppContext';
-
-interface MainPanelProps {
-    isPlotted: boolean;
-    analysisResult: AnalysisResult | null;
-    data: DataPoint[];
-    selectedRowIndices: Set<number>;
-    independentVar: string;
-    dependentVar: string;
-    onCellChange: (rowIndex: number, column: string, value: any) => void;
-    onColumnRename: (oldName: string, newName:string) => void;
-    onAddColumn: () => void;
-    onDeleteColumn: (columnName: string) => void;
-    onAddRow: () => void;
-    onDeleteRow: (rowIndex: number) => void;
-    onDeleteSelectedRows: () => void;
-    onRowSelectionChange: (rowIndex: number, isSelected: boolean) => void;
-    onSelectAllRows: (selectAll: boolean) => void;
-}
+import { useFileContext } from '../contexts/FileContext';
 
 const PlotPlaceholder: React.FC = () => {
     const { t } = useAppContext();
@@ -37,161 +21,148 @@ const PlotPlaceholder: React.FC = () => {
 )};
 
 
-export const MainPanel: React.FC<MainPanelProps> = ({ 
-    isPlotted, 
-    analysisResult, 
-    data, 
-    selectedRowIndices,
-    independentVar, 
-    dependentVar,
-    onCellChange,
-    onColumnRename,
-    onAddColumn,
-    onDeleteColumn,
-    onAddRow,
-    onDeleteRow,
-    onDeleteSelectedRows,
-    onRowSelectionChange,
-    onSelectAllRows
-}) => {
+export const MainPanel: React.FC = () => {
+    const { fileState, updateFileState } = useFileContext();
     const mainPanelRef = useRef<HTMLDivElement>(null);
     const rightPanelRef = useRef<HTMLDivElement>(null);
     const topPanelRef = useRef<HTMLDivElement>(null);
     const chartStateRef = useRef<any>(null);
-
-    const [tablePanelWidth, setTablePanelWidth] = useState(400);
-    const [plotExplorerWidth, setPlotExplorerWidth] = useState(256);
-    const [topPanelHeight, setTopPanelHeight] = useState(60);
-
-    // Interactive Plot State
-    const [activeTool, setActiveTool] = useState<PlotTool | null>(null);
-    const [xAxisDomain, setXAxisDomain] = useState<[any, any]>(['dataMin', 'dataMax']);
-    const [yAxisDomain, setYAxisDomain] = useState<[any, any]>(['dataMin', 'dataMax']);
-    const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
     
-    // Plot style state
+    // All state, including UI state, now comes from context
+    if (!fileState) return null;
+    const { 
+        isPlotted, 
+        analysisResult, 
+        data, 
+        selectedRowIndices, 
+        independentVar, 
+        dependentVar,
+        uiState
+    } = fileState;
+    const { 
+        tablePanelWidth,
+        plotExplorerWidth,
+        topPanelHeight,
+        activePlotTool,
+        xAxisDomain,
+        yAxisDomain,
+        selectedPlotIndices
+    } = uiState;
+    
+    // Plot style state (could also be moved to uiState if desired)
     const [showGrid, setShowGrid] = useState(true);
     const [showLine, setShowLine] = useState(true);
     const [showResiduals, setShowResiduals] = useState(true);
     const [showObservations, setShowObservations] = useState(true);
-    
     const [scatterColor, setScatterColor] = useState('#4f46e5');
     const [scatterOpacity, setScatterOpacity] = useState(1);
     const [scatterSize, setScatterSize] = useState(30);
-    
     const [lineColor, setLineColor] = useState('#10b981');
     const [lineOpacity, setLineOpacity] = useState(1);
     const [lineWidth, setLineWidth] = useState(2);
     const [lineStyle, setLineStyle] = useState('solid');
-    
     const [residualsColor, setResidualsColor] = useState('#f97316');
     const [residualsOpacity, setResidualsOpacity] = useState(0.7);
     const [residualsWidth, setResidualsWidth] = useState(1.5);
     const [residualsStyle, setResidualsStyle] = useState('dashed');
 
+    const updateUiState = (updates: Partial<typeof uiState>) => {
+        updateFileState({ uiState: { ...uiState, ...updates }});
+    }
+
     const handleZoom = (factor: number) => {
         if (!chartStateRef.current?.xAxisMap?.scale || !chartStateRef.current?.yAxisMap?.scale) return;
-
         const { xAxisMap, yAxisMap } = chartStateRef.current;
         const [xMin, xMax] = xAxisMap.scale.domain();
         const [yMin, yMax] = yAxisMap.scale.domain();
-        
         if(typeof xMin !== 'number' || typeof xMax !== 'number' || typeof yMin !== 'number' || typeof yMax !== 'number') return;
-
         const xRange = xMax - xMin;
         const yRange = yMax - yMin;
         const newXRange = xRange * factor;
         const newYRange = yRange * factor;
         const xCenter = xMin + xRange / 2;
         const yCenter = yMin + yRange / 2;
-
-        setXAxisDomain([xCenter - newXRange / 2, xCenter + newYRange / 2]);
-        setYAxisDomain([yCenter - newYRange / 2, yCenter + newYRange / 2]);
+        updateUiState({ 
+            xAxisDomain: [xCenter - newXRange / 2, xCenter + newXRange / 2],
+            yAxisDomain: [yCenter - newYRange / 2, yCenter + newYRange / 2]
+        });
     };
 
     const handleResetView = useCallback(() => {
-        setXAxisDomain(['dataMin', 'dataMax']);
-        setYAxisDomain(['dataMin', 'dataMax']);
-        setActiveTool(null);
-    }, []);
+        updateUiState({
+            xAxisDomain: ['dataMin', 'dataMax'],
+            yAxisDomain: ['dataMin', 'dataMax'],
+            activePlotTool: null
+        });
+    }, [updateUiState]);
 
     const handleClearSelection = useCallback(() => {
-        setSelectedIndices(new Set());
-    }, []);
+        updateUiState({ selectedPlotIndices: new Set() });
+    }, [updateUiState]);
 
     const handleMouseDownTableResizer = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         document.body.style.cursor = 'col-resize';
-        
         const handleMouseMove = (moveEvent: MouseEvent) => {
             if (mainPanelRef.current) {
                 const parentRect = mainPanelRef.current.getBoundingClientRect();
                 const newWidth = moveEvent.clientX - parentRect.left;
                 if (newWidth > 300 && newWidth < parentRect.width - 300) {
-                    setTablePanelWidth(newWidth);
+                    updateUiState({ tablePanelWidth: newWidth });
                 }
             }
         };
-
         const handleMouseUp = () => {
             document.body.style.cursor = 'default';
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
         };
-
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
-    }, []);
+    }, [updateUiState]);
 
     const handleMouseDownPlotExplorerResizer = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         document.body.style.cursor = 'col-resize';
-        
         const handleMouseMove = (moveEvent: MouseEvent) => {
             if (topPanelRef.current) {
                 const parentRect = topPanelRef.current.getBoundingClientRect();
                 const newWidth = parentRect.right - moveEvent.clientX;
                 if (newWidth > 200 && newWidth < parentRect.width - 300) {
-                    setPlotExplorerWidth(newWidth);
+                    updateUiState({ plotExplorerWidth: newWidth });
                 }
             }
         };
-
         const handleMouseUp = () => {
             document.body.style.cursor = 'default';
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
         };
-
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
-    }, []);
+    }, [updateUiState]);
 
     const handleMouseDownHorizontal = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         document.body.style.cursor = 'row-resize';
-
         const handleMouseMove = (moveEvent: MouseEvent) => {
             if (rightPanelRef.current) {
                 const parentRect = rightPanelRef.current.getBoundingClientRect();
                 const newHeight = moveEvent.clientY - parentRect.top;
                 const newHeightPercent = (newHeight / parentRect.height) * 100;
-                
                 if (newHeightPercent > 20 && newHeightPercent < 80) {
-                    setTopPanelHeight(newHeightPercent);
+                    updateUiState({ topPanelHeight: newHeightPercent });
                 }
             }
         };
-
         const handleMouseUp = () => {
             document.body.style.cursor = 'default';
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
         };
-
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
-    }, []);
+    }, [updateUiState]);
 
     const { 
         unselectedData, 
@@ -201,83 +172,25 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     } = useMemo(() => {
         const activePlotData: DataPoint[] = [];
         const inactivePlotData: DataPoint[] = [];
-        
-        // Use a map to easily get the original index of a data point object.
-        // This is safer than relying on array indices after filtering.
         const dataPointToOriginalIndex = new Map<DataPoint, number>();
+        data.forEach((d, i) => dataPointToOriginalIndex.set(d, i));
         data.forEach((d, i) => {
-            dataPointToOriginalIndex.set(d, i);
+            if (selectedRowIndices.has(i)) activePlotData.push(d);
+            else inactivePlotData.push(d);
         });
-
-        data.forEach((d, i) => {
-            if (selectedRowIndices.has(i)) {
-                activePlotData.push(d);
-            } else {
-                inactivePlotData.push(d);
-            }
-        });
-
         const selectedPlotData = activePlotData.filter((d) => {
             const originalIndex = dataPointToOriginalIndex.get(d);
-            return originalIndex !== undefined && selectedIndices.has(originalIndex);
+            return originalIndex !== undefined && selectedPlotIndices.has(originalIndex);
         });
-        
         const unselectedPlotData = activePlotData.filter(d => !selectedPlotData.includes(d));
-
-        return { 
-            unselectedData: unselectedPlotData, 
-            selectedData: selectedPlotData, 
-            inactiveData: inactivePlotData,
-            residualsData: activePlotData
-        };
-    }, [data, selectedRowIndices, selectedIndices]);
-
-    const tableData = useMemo(() => {
-        if (!analysisResult || !isPlotted) {
-            return data.map(d => ({...d, residual: undefined, predicted: undefined }));
-        }
-
-        // A map from original index to its index in the activeData array
-        const originalToActiveIndexMap = new Map<number, number>();
-        let currentActiveIndex = 0;
-        data.forEach((_, index) => {
-            if (selectedRowIndices.has(index)) {
-                originalToActiveIndexMap.set(index, currentActiveIndex++);
-            }
-        });
-        
-        return data.map((row, index) => {
-            if (originalToActiveIndexMap.has(index)) {
-                const activeIndex = originalToActiveIndexMap.get(index)!;
-                const x = row[independentVar];
-                if (typeof x === 'number' && analysisResult.residuals.length > activeIndex) {
-                    const predicted = analysisResult.intercept + analysisResult.slope * x;
-                    const residual = analysisResult.residuals[activeIndex];
-                    return { ...row, predicted, residual };
-                }
-            }
-            return { ...row, predicted: undefined, residual: undefined };
-        });
-    }, [data, analysisResult, selectedRowIndices, independentVar, isPlotted]);
+        return { unselectedData: unselectedPlotData, selectedData: selectedPlotData, inactiveData: inactivePlotData, residualsData: activePlotData };
+    }, [data, selectedRowIndices, selectedPlotIndices]);
 
 
     return (
         <div ref={mainPanelRef} className="flex-grow flex bg-panel dark:bg-dark-panel overflow-hidden">
             <div className="flex-shrink-0 h-full" style={{ width: `${tablePanelWidth}px` }}>
-                <DataTable 
-                    data={tableData}
-                    onCellChange={onCellChange}
-                    onColumnRename={onColumnRename}
-                    onAddColumn={onAddColumn}
-                    onDeleteColumn={onDeleteColumn}
-                    onAddRow={onAddRow}
-                    onDeleteRow={onDeleteRow}
-                    onDeleteSelectedRows={onDeleteSelectedRows}
-                    selectedIndices={selectedIndices}
-                    selectedRowIndices={selectedRowIndices}
-                    onRowSelectionChange={onRowSelectionChange}
-                    onSelectAllRows={onSelectAllRows}
-                />
+                <DataTable />
             </div>
             <div
                 className="w-1.5 flex-shrink-0 bg-border dark:bg-dark-border cursor-col-resize group flex items-center justify-center"
@@ -292,13 +205,13 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                             <div className="flex-grow flex flex-col" style={{ width: `calc(100% - ${plotExplorerWidth}px - 6px)` }}>
                                 <div className="flex-shrink-0 border-b border-border dark:border-dark-border">
                                     <PlotToolbar 
-                                        activeTool={activeTool}
-                                        setActiveTool={setActiveTool}
+                                        activeTool={activePlotTool}
+                                        setActiveTool={(tool) => updateUiState({ activePlotTool: tool })}
                                         onZoomIn={() => handleZoom(0.8)}
                                         onZoomOut={() => handleZoom(1.2)}
                                         onReset={handleResetView}
                                         onClearSelection={handleClearSelection}
-                                        hasSelection={selectedIndices.size > 0}
+                                        hasSelection={selectedPlotIndices.size > 0}
                                     />
                                 </div>
                                 <div className="flex-grow p-4">
@@ -313,10 +226,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                                         dependentVar={dependentVar}
                                         
                                         chartStateRef={chartStateRef}
-                                        activeTool={activeTool}
-                                        xAxisDomain={xAxisDomain} setXAxisDomain={setXAxisDomain}
-                                        yAxisDomain={yAxisDomain} setYAxisDomain={setYAxisDomain}
-                                        selectedIndices={selectedIndices} setSelectedIndices={setSelectedIndices}
+                                        activeTool={activePlotTool}
+                                        xAxisDomain={xAxisDomain} setXAxisDomain={(d) => updateUiState({ xAxisDomain: d })}
+                                        yAxisDomain={yAxisDomain} setYAxisDomain={(d) => updateUiState({ yAxisDomain: d })}
+                                        selectedIndices={selectedPlotIndices} setSelectedIndices={(i) => updateUiState({ selectedPlotIndices: i })}
 
                                         showGrid={showGrid}
                                         showObservations={showObservations}

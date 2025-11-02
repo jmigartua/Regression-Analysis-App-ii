@@ -1,19 +1,17 @@
 
 import React, { useState } from 'react';
-import { ChevronDown, BarChart2 } from 'lucide-react';
+import { ChevronDown, BarChart2, FileText } from 'lucide-react';
 import { FileUploader } from './FileUploader';
 import { VariableSelector } from './VariableSelector';
 import { useAppContext } from '../contexts/AppContext';
+import { useFileContext } from '../contexts/FileContext';
+import type { FileState } from '../types';
 
 interface LeftSidebarProps {
-  onFileChange: (file: File | null) => void;
-  file: File | null;
-  columns: string[];
-  independentVar: string;
-  setIndependentVar: (value: string) => void;
-  dependentVar: string;
-  setDependentVar: (value: string) => void;
-  onPlot: () => void;
+  onFileAdd: (file: File) => void;
+  files: Record<string, FileState>;
+  activeFileId: string | null;
+  setActiveFileId: (id: string) => void;
 }
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => {
@@ -34,8 +32,26 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
   );
 };
 
-export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
+export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onFileAdd, files, activeFileId, setActiveFileId }) => {
   const { t } = useAppContext();
+  const { fileState, updateFileState } = useFileContext();
+
+  const handlePlot = () => {
+    if (!fileState) return;
+    if (!fileState.data.length || !fileState.independentVar || !fileState.dependentVar) {
+      //setError(t('error.missing_data'));
+      return;
+    }
+    if (fileState.independentVar === fileState.dependentVar) {
+      //setError(t('error.same_variables'));
+      return;
+    }
+    updateFileState({ isPlotted: true });
+  };
+  
+  const setIndependentVar = (value: string) => updateFileState({ independentVar: value });
+  const setDependentVar = (value: string) => updateFileState({ dependentVar: value });
+
   return (
     <aside className="h-full w-full bg-sidebar dark:bg-dark-sidebar flex-shrink-0 flex flex-col">
       <div className="p-2 border-b border-border dark:border-dark-border">
@@ -43,20 +59,36 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
       </div>
       <div className="flex-grow overflow-y-auto py-2 space-y-2">
         <Section title={t('sidebar.data_source')}>
-          <FileUploader onFileChange={props.onFileChange} file={props.file} />
+          <FileUploader onFileAdd={onFileAdd} />
+           <div className="pt-2">
+            {Object.keys(files).length > 0 ? (
+                Object.values(files).map((f: FileState) => (
+                    <button 
+                        key={f.id} 
+                        onClick={() => setActiveFileId(f.id)}
+                        className={`w-full text-left text-xs p-2 rounded-md flex items-center truncate ${activeFileId === f.id ? 'bg-accent/20 text-accent' : 'text-text-secondary dark:text-gray-300 hover:bg-black/5 dark:hover:bg-accent/10'}`}
+                    >
+                        <FileText className="w-3.5 h-3.5 mr-2 flex-shrink-0" />
+                        <span className="truncate">{f.file.name}</span>
+                    </button>
+                ))
+            ) : (
+              <div className="text-xs text-text-tertiary dark:text-gray-500 px-2 py-1">{t('uploader.no_folder')}</div>
+            )}
+          </div>
         </Section>
-        {props.columns.length > 0 && (
+        {fileState && fileState.columns.length > 0 && (
           <Section title={t('sidebar.variables')}>
             <VariableSelector
-              columns={props.columns}
-              independentVar={props.independentVar}
-              setIndependentVar={props.setIndependentVar}
-              dependentVar={props.dependentVar}
-              setDependentVar={props.setDependentVar}
+              columns={fileState.columns}
+              independentVar={fileState.independentVar}
+              setIndependentVar={setIndependentVar}
+              dependentVar={fileState.dependentVar}
+              setDependentVar={setDependentVar}
             />
             <div className="mt-4">
               <button
-                onClick={props.onPlot}
+                onClick={handlePlot}
                 className="w-full flex items-center justify-center bg-accent hover:bg-blue-500 disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm transition-colors duration-200"
               >
                 <BarChart2 className="w-4 h-4 mr-2" />

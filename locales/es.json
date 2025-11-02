@@ -28,6 +28,7 @@
   "main.plot_placeholder_description": "Selecciona tus variables y haz clic en el botón 'Graficar Datos' en el explorador para visualizar tus datos.",
   "tabs.analysis_fitting": "Análisis y Ajuste",
   "tabs.simulation": "Simulación",
+  "tabs.close_tab_tooltip": "Cerrar Pestaña",
   "simulation.title": "Panel de Simulación",
   "simulation.description": "El entorno de simulación estará disponible aquí. Podrás probar modelos y ejecutar escenarios con tus datos.",
   "plot.observations": "Observaciones",
