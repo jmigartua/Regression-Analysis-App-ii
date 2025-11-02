@@ -6,13 +6,28 @@ import { useAppContext } from '../contexts/AppContext';
 
 interface PlotPanelProps {
   data: DataPoint[];
-  regressionLine?: DataPoint[];
   independentVar: string;
   dependentVar: string;
+  analysisResult: AnalysisResult | null;
+  
+  // Style props
   showGrid: boolean;
+  showObservations: boolean;
   showLine: boolean;
   showResiduals: boolean;
-  analysisResult: AnalysisResult | null;
+
+  scatterColor: string;
+  scatterOpacity: number;
+  scatterSize: number;
+
+  lineColor: string;
+  lineWidth: number;
+  lineStyle: string;
+
+  residualsColor: string;
+  residualsOpacity: number;
+  residualsWidth: number;
+  residualsStyle: string;
 }
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -28,8 +43,21 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
+const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 0, 0';
+};
+
+const getDashArray = (style: string) => {
+    switch (style) {
+        case 'dashed': return '5 5';
+        case 'dotted': return '1 5';
+        default: return 'none';
+    }
+}
+
 const ResidualLine = (props: any) => {
-    const { cx, cy, yAxis, payload, independentVar, analysisResult } = props;
+    const { cx, cy, yAxis, payload, independentVar, analysisResult, color, opacity, width, style } = props;
 
     if (!analysisResult || !payload || !independentVar || !yAxis) {
         return null;
@@ -44,6 +72,7 @@ const ResidualLine = (props: any) => {
 
     const predictedY = intercept + slope * xValue;
     const predictedCy = yAxis.scale(predictedY);
+    const strokeColor = `rgba(${hexToRgb(color)}, ${opacity})`;
 
     return (
         <line
@@ -51,14 +80,33 @@ const ResidualLine = (props: any) => {
             y1={cy}
             x2={cx}
             y2={predictedCy}
-            stroke="rgba(239, 68, 68, 0.5)"
-            strokeWidth={1.5}
-            strokeDasharray="3 3"
+            stroke={strokeColor}
+            strokeWidth={width}
+            strokeDasharray={getDashArray(style)}
         />
     );
 };
 
-export const PlotPanel: React.FC<PlotPanelProps> = ({ data, regressionLine, independentVar, dependentVar, showGrid, showLine, showResiduals, analysisResult }) => {
+export const PlotPanel: React.FC<PlotPanelProps> = ({ 
+    data, 
+    independentVar, 
+    dependentVar, 
+    analysisResult,
+    showGrid,
+    showObservations,
+    showLine,
+    showResiduals,
+    scatterColor,
+    scatterOpacity,
+    scatterSize,
+    lineColor,
+    lineWidth,
+    lineStyle,
+    residualsColor,
+    residualsOpacity,
+    residualsWidth,
+    residualsStyle
+}) => {
     const { t, theme } = useAppContext();
     
     const tickColor = theme === 'dark' ? '#94a3b8' : '#6b7280';
@@ -73,24 +121,43 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({ data, regressionLine, inde
                     <YAxis type="number" dataKey={dependentVar} name={dependentVar} unit="" stroke={tickColor} domain={['dataMin', 'dataMax']} />
                     <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
                     <Legend />
-                    <Scatter name={t('plot.observations')} data={data} fill="#4f46e5" shape="circle" />
+                    {showObservations && <Scatter 
+                        name={t('plot.observations')} 
+                        data={data} 
+                        fill={scatterColor} 
+                        fillOpacity={scatterOpacity}
+                        shape="circle" 
+                        legendType="circle"
+                        // Recharts 'size' is area, so we square root to make slider feel linear
+                        // Then multiply to get a good range.
+                        size={scatterSize * scatterSize / 20}
+                    />}
                     {showResiduals && analysisResult && (
                         <Scatter
                             isAnimationActive={false}
                             data={data}
-                            shape={(props) => <ResidualLine {...props} independentVar={independentVar} analysisResult={analysisResult} />}
+                            shape={(props) => <ResidualLine 
+                                {...props} 
+                                independentVar={independentVar} 
+                                analysisResult={analysisResult}
+                                color={residualsColor}
+                                opacity={residualsOpacity}
+                                width={residualsWidth}
+                                style={residualsStyle}
+                            />}
                             key={`residuals-${data.length}`} 
                         />
                     )}
-                    {regressionLine && showLine && <Line
+                    {analysisResult?.regressionLine && showLine && <Line
                         name={t('plot.regression_line')}
                         type="monotone"
                         dataKey="y"
-                        data={regressionLine}
-                        stroke="#10b981"
+                        data={analysisResult.regressionLine}
+                        stroke={lineColor}
                         dot={false}
                         activeDot={false}
-                        strokeWidth={2}
+                        strokeWidth={lineWidth}
+                        strokeDasharray={getDashArray(lineStyle)}
                         legendType="line"
                     />}
                 </ScatterChart>

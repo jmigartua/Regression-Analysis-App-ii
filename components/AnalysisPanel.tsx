@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine } from 'recharts';
+import { ChevronDown } from 'lucide-react';
 import { ResultsPanel } from './ResultsPanel';
 import type { AnalysisResult } from '../types';
 import { useAppContext } from '../contexts/AppContext';
@@ -9,22 +10,7 @@ interface AnalysisPanelProps {
   result: AnalysisResult;
   independentVar: string;
   dependentVar: string;
-  showGrid: boolean;
-  onToggleGrid: (show: boolean) => void;
-  showLine: boolean;
-  onToggleLine: (show: boolean) => void;
-  showResiduals: boolean;
-  onToggleResiduals: (show: boolean) => void;
 }
-
-const Toggle: React.FC<{ label: string; checked: boolean; onChange: (checked: boolean) => void }> = ({ label, checked, onChange }) => (
-    <label onClick={(e) => { e.preventDefault(); onChange(!checked); }} className="flex items-center space-x-2 cursor-pointer select-none">
-        <div className={`w-10 h-5 flex items-center rounded-full p-1 duration-300 ease-in-out ${checked ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-600'}`}>
-            <div className={`bg-white w-3.5 h-3.5 rounded-full shadow-md transform duration-300 ease-in-out ${checked ? 'translate-x-5' : ''}`}></div>
-        </div>
-        <span className="text-sm text-text-secondary dark:text-gray-300">{label}</span>
-    </label>
-);
 
 const ResidualTooltip: React.FC<{ active?: boolean; payload?: any[]; independentVar: string; }> = ({ active, payload, independentVar }) => {
     const { t } = useAppContext();
@@ -40,8 +26,40 @@ const ResidualTooltip: React.FC<{ active?: boolean; payload?: any[]; independent
     return null;
 };
 
+const Section: React.FC<{ title: string; children: React.ReactNode; defaultOpen?: boolean }> = ({ title, children, defaultOpen = true }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
-export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independentVar, dependentVar, showGrid, onToggleGrid, showLine, onToggleLine, showResiduals, onToggleResiduals }) => {
+  return (
+    <div className="border-b border-border dark:border-dark-border">
+      <button 
+        className="flex items-center cursor-pointer px-2 py-2 w-full text-left"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+      >
+          <ChevronDown className={`w-4 h-4 mr-2 flex-shrink-0 transition-transform ${isOpen ? '' : '-rotate-90'}`}/>
+          <h3 className="text-xs font-bold uppercase text-text-primary dark:text-gray-200 tracking-wider select-none">{title}</h3>
+      </button>
+      {isOpen && <div className="p-2 space-y-2">{children}</div>}
+    </div>
+  );
+};
+
+const FittingOption: React.FC<{ label: string; active?: boolean; disabled?: boolean; onClick?: () => void }> = ({ label, active, disabled, onClick }) => (
+    <button
+        onClick={onClick}
+        disabled={disabled}
+        className={`w-full text-left px-2 py-1.5 text-sm rounded-md flex items-center ${
+            active 
+                ? 'bg-accent/20 text-accent font-semibold' 
+                : 'text-text-primary dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    >
+        {label}
+    </button>
+);
+
+
+export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independentVar, dependentVar }) => {
     const { t, theme } = useAppContext();
     const [activeTab, setActiveTab] = useState<'analysis' | 'residuals'>('analysis');
     const [decimalPoints, setDecimalPoints] = useState(4);
@@ -65,56 +83,48 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independen
                     {t('analysis.tab_residuals')}
                 </button>
             </div>
-            <div className="flex-grow overflow-y-auto p-4">
+            <div className="flex-grow overflow-auto">
                 {activeTab === 'analysis' && (
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-6">
-                            <ResultsPanel result={result} decimalPoints={decimalPoints} />
-                            <div className="space-y-6">
-                                <div>
-                                    <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-3">{t('analysis.controls_title')}</h3>
-                                    <div className="flex items-center space-x-2">
-                                        <label htmlFor="decimal-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('analysis.decimal_points')}:</label>
-                                        <input
-                                            id="decimal-slider"
-                                            type="range"
-                                            min="1"
-                                            max="8"
-                                            value={decimalPoints}
-                                            onChange={(e) => setDecimalPoints(Number(e.target.value))}
-                                            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                                        />
-                                        <span className="text-sm font-mono w-4 text-right">{decimalPoints}</span>
-                                    </div>
+                     <div className="flex h-full">
+                        <div className="w-64 flex-shrink-0 bg-sidebar dark:bg-dark-sidebar border-r border-border dark:border-dark-border overflow-y-auto">
+                            <Section title={t('analysis.regression_type_title')}>
+                                <FittingOption label={t('analysis.linear_regression')} active />
+                                <FittingOption label={t('analysis.higher_order_regressions')} disabled />
+                            </Section>
+
+                             <Section title={t('analysis.regression_method_title')}>
+                                <p className="text-xs text-text-tertiary px-2">{t('analysis.regression_method_placeholder')}</p>
+                            </Section>
+
+                            <Section title={t('analysis.controls_title')}>
+                                <div className="flex items-center space-x-2">
+                                    <label htmlFor="decimal-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('analysis.decimal_points')}:</label>
+                                    <input
+                                        id="decimal-slider"
+                                        type="range"
+                                        min="1"
+                                        max="8"
+                                        value={decimalPoints}
+                                        onChange={(e) => setDecimalPoints(Number(e.target.value))}
+                                        className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                                    />
+                                    <span className="text-sm font-mono w-4 text-right">{decimalPoints}</span>
                                 </div>
-                                <div>
-                                    <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-3">{t('plot.controls_title')}</h3>
-                                    <div className="flex flex-col space-y-3 items-start">
-                                        <Toggle label={t('analysis.show_grid')} checked={showGrid} onChange={onToggleGrid} />
-                                        <Toggle label={t('analysis.show_line')} checked={showLine} onChange={onToggleLine} />
-                                        <Toggle label={t('analysis.show_residuals')} checked={showResiduals} onChange={onToggleResiduals} />
-                                    </div>
-                                </div>
-                            </div>
+                            </Section>
                         </div>
-                        <div className="space-y-6">
-                             <div>
+                        <div className="flex-grow p-6 space-y-6 overflow-y-auto">
+                            <ResultsPanel result={result} decimalPoints={decimalPoints} />
+                            <div>
                                 <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-2">{t('right_sidebar.equation')}</h3>
                                 <div className="text-sm bg-bg-default dark:bg-dark-bg p-3 rounded font-mono break-words border border-border dark:border-dark-border">
                                     <span className="text-purple-500 dark:text-purple-400">{dependentVar}</span> = <span className="text-accent dark:text-accent">{result.intercept.toFixed(decimalPoints)}</span> + <span className="text-accent dark:text-accent">{result.slope.toFixed(decimalPoints)}</span> * <span className="text-green-500 dark:text-green-400">{independentVar}</span>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-3">{t('analysis.fitting_options_title')}</h3>
-                                <div className="p-4 h-32 bg-bg-default dark:bg-dark-bg border border-dashed border-border dark:border-dark-border rounded-md flex items-center justify-center text-center text-sm text-text-tertiary">
-                                    <p>{t('analysis.fitting_options_placeholder')}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 )}
                 {activeTab === 'residuals' && (
-                    <div className="w-full h-full min-h-[200px]">
+                    <div className="w-full h-full min-h-[200px] p-4">
                         <ResponsiveContainer width="100%" height="100%">
                             <ScatterChart margin={{ top: 5, right: 20, bottom: 20, left: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -122,7 +132,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independen
                                 <YAxis type="number" dataKey="residual" name={t('analysis.residual')} stroke={tickColor} />
                                 <Tooltip content={<ResidualTooltip independentVar={independentVar} />} cursor={{ strokeDasharray: '3 3' }} />
                                 <ReferenceLine y={0} stroke={theme === 'dark' ? '#f87171' : '#ef4444'} strokeDasharray="3 3" />
-                                <Scatter name={t('analysis.residuals')} data={result.residualPlotData} fillOpacity={0.6} fill="#8884d8" shape="circle" />
+                                <Scatter name={t('analysis.residuals')} data={result.residualPlotData} fillOpacity={0.7} fill="#f97316" shape="circle" />
                             </ScatterChart>
                         </ResponsiveContainer>
                     </div>
