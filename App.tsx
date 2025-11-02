@@ -219,6 +219,24 @@ export default function App() {
     });
   }, []);
 
+    const handleDeleteSelectedRows = useCallback(() => {
+        if (selectedRowIndices.size === 0) return;
+
+        // Fix: Explicitly type sort parameters to ensure correct type inference.
+        const indicesToDelete = Array.from(selectedRowIndices).sort((a: number, b: number) => b - a);
+        
+        setData(currentData => {
+            const newData = [...currentData];
+            for (const index of indicesToDelete) {
+                newData.splice(index, 1);
+            }
+            return newData;
+        });
+        
+        // After deletion, all selections are invalid.
+        setSelectedRowIndices(new Set());
+    }, [selectedRowIndices]);
+
   const handleRowSelectionChange = useCallback((rowIndex: number, isSelected: boolean) => {
     setSelectedRowIndices(currentIndices => {
         const newIndices = new Set(currentIndices);
@@ -297,6 +315,7 @@ export default function App() {
             onDeleteColumn={handleDeleteColumn}
             onAddRow={handleAddRow}
             onDeleteRow={handleDeleteRow}
+            onDeleteSelectedRows={handleDeleteSelectedRows}
             onRowSelectionChange={handleRowSelectionChange}
             onSelectAllRows={handleSelectAllRows}
           />

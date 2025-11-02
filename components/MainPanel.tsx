@@ -22,6 +22,7 @@ interface MainPanelProps {
     onDeleteColumn: (columnName: string) => void;
     onAddRow: () => void;
     onDeleteRow: (rowIndex: number) => void;
+    onDeleteSelectedRows: () => void;
     onRowSelectionChange: (rowIndex: number, isSelected: boolean) => void;
     onSelectAllRows: (selectAll: boolean) => void;
 }
@@ -60,6 +61,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     onDeleteColumn,
     onAddRow,
     onDeleteRow,
+    onDeleteSelectedRows,
     onRowSelectionChange,
     onSelectAllRows
 }) => {
@@ -234,6 +236,34 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         };
     }, [data, selectedRowIndices, selectedIndices]);
 
+    const tableData = useMemo(() => {
+        if (!analysisResult || !isPlotted) {
+            return data.map(d => ({...d, residual: undefined, predicted: undefined }));
+        }
+
+        // A map from original index to its index in the activeData array
+        const originalToActiveIndexMap = new Map<number, number>();
+        let currentActiveIndex = 0;
+        data.forEach((_, index) => {
+            if (selectedRowIndices.has(index)) {
+                originalToActiveIndexMap.set(index, currentActiveIndex++);
+            }
+        });
+        
+        return data.map((row, index) => {
+            if (originalToActiveIndexMap.has(index)) {
+                const activeIndex = originalToActiveIndexMap.get(index)!;
+                const x = row[independentVar];
+                if (typeof x === 'number' && analysisResult.residuals.length > activeIndex) {
+                    const predicted = analysisResult.intercept + analysisResult.slope * x;
+                    const residual = analysisResult.residuals[activeIndex];
+                    return { ...row, predicted, residual };
+                }
+            }
+            return { ...row, predicted: undefined, residual: undefined };
+        });
+    }, [data, analysisResult, selectedRowIndices, independentVar, isPlotted]);
+
 
     if (data.length === 0) {
         return <div className="flex-grow overflow-y-auto p-6"><WorkspacePlaceholder /></div>;
@@ -243,13 +273,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         <div ref={mainPanelRef} className="flex-grow flex bg-panel dark:bg-dark-panel overflow-hidden">
             <div className="flex-shrink-0 h-full" style={{ width: `${tablePanelWidth}px` }}>
                 <DataTable 
-                    data={data}
+                    data={tableData}
                     onCellChange={onCellChange}
                     onColumnRename={onColumnRename}
                     onAddColumn={onAddColumn}
                     onDeleteColumn={onDeleteColumn}
                     onAddRow={onAddRow}
                     onDeleteRow={onDeleteRow}
+                    onDeleteSelectedRows={onDeleteSelectedRows}
                     selectedIndices={selectedIndices}
                     selectedRowIndices={selectedRowIndices}
                     onRowSelectionChange={onRowSelectionChange}

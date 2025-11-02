@@ -75,6 +75,7 @@
   "table.add_column": "Gehitu Zutabea",
   "table.delete_row": "Ezabatu Errenkada",
   "table.delete_column": "Ezabatu Zutabea",
+  "table.delete_selected_rows": "Ezabatu Hautatutako Errenkadak",
   "table.new_column_prompt": "Sartu zutabe berriaren izena:",
   "table.duplicate_column_error": "Dagoeneko badago '{columnName}' izeneko zutabe bat.",
   "error.invalid_file_type": "Fitxategi mota baliogabea. Mesedez, igo CSV fitxategi bat.",

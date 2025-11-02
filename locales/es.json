@@ -75,6 +75,7 @@
   "table.add_column": "Añadir Columna",
   "table.delete_row": "Eliminar Fila",
   "table.delete_column": "Eliminar Columna",
+  "table.delete_selected_rows": "Eliminar Filas Seleccionadas",
   "table.new_column_prompt": "Introduce el nombre de la nueva columna:",
   "table.duplicate_column_error": "Ya existe una columna llamada '{columnName}'.",
   "error.invalid_file_type": "Tipo de archivo no válido. Por favor, sube un archivo CSV.",
