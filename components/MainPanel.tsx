@@ -13,6 +13,12 @@ interface MainPanelProps {
     data: DataPoint[];
     independentVar: string;
     dependentVar: string;
+    onCellChange: (rowIndex: number, column: string, value: any) => void;
+    onColumnRename: (oldName: string, newName:string) => void;
+    onAddColumn: () => void;
+    onDeleteColumn: (columnName: string) => void;
+    onAddRow: () => void;
+    onDeleteRow: (rowIndex: number) => void;
 }
 
 const WorkspacePlaceholder: React.FC = () => {
@@ -36,7 +42,19 @@ const PlotPlaceholder: React.FC = () => {
 )};
 
 
-export const MainPanel: React.FC<MainPanelProps> = ({ isPlotted, analysisResult, data, independentVar, dependentVar }) => {
+export const MainPanel: React.FC<MainPanelProps> = ({ 
+    isPlotted, 
+    analysisResult, 
+    data, 
+    independentVar, 
+    dependentVar,
+    onCellChange,
+    onColumnRename,
+    onAddColumn,
+    onDeleteColumn,
+    onAddRow,
+    onDeleteRow 
+}) => {
     const mainPanelRef = useRef<HTMLDivElement>(null);
     const [leftPanelWidth, setLeftPanelWidth] = useState(400);
     const [showGrid, setShowGrid] = useState(true);
@@ -83,7 +101,15 @@ export const MainPanel: React.FC<MainPanelProps> = ({ isPlotted, analysisResult,
     return (
         <div ref={mainPanelRef} className="flex-grow flex bg-panel dark:bg-dark-panel overflow-hidden">
             <div className="flex-shrink-0 h-full" style={{ width: `${leftPanelWidth}px` }}>
-                <DataTable data={data} />
+                <DataTable 
+                    data={data}
+                    onCellChange={onCellChange}
+                    onColumnRename={onColumnRename}
+                    onAddColumn={onAddColumn}
+                    onDeleteColumn={onDeleteColumn}
+                    onAddRow={onAddRow}
+                    onDeleteRow={onDeleteRow}
+                />
             </div>
             <div
                 className="w-1 flex-shrink-0 bg-border dark:bg-dark-border cursor-col-resize hover:bg-accent"

@@ -102,6 +102,89 @@ export default function App() {
       setIsPlotted(false);
     }
   }, [data, independentVar, dependentVar, t]);
+  
+  const handleCellChange = useCallback((rowIndex: number, column: string, value: any) => {
+    setData(currentData => {
+      const newData = [...currentData];
+      const newRow = { ...newData[rowIndex], [column]: value };
+      newData[rowIndex] = newRow;
+      return newData;
+    });
+    setIsPlotted(false);
+    setAnalysisResult(null);
+  }, []);
+
+  const handleColumnRename = useCallback((oldName: string, newName: string) => {
+    if (oldName === newName || columns.includes(newName)) {
+      if (oldName !== newName) {
+        setError(t('table.duplicate_column_error', { columnName: newName }));
+      }
+      return; 
+    }
+    
+    setColumns(currentCols => currentCols.map(c => c === oldName ? newName : c));
+    
+    setData(currentData => currentData.map(row => {
+        const newRow = { ...row };
+        if (Object.prototype.hasOwnProperty.call(newRow, oldName)) {
+            newRow[newName] = newRow[oldName];
+            delete newRow[oldName];
+        }
+        return newRow;
+    }));
+
+    if (independentVar === oldName) setIndependentVar(newName);
+    if (dependentVar === oldName) setDependentVar(newName);
+    setIsPlotted(false);
+    setAnalysisResult(null);
+
+  }, [columns, independentVar, dependentVar, t]);
+
+  const handleAddColumn = useCallback(() => {
+    const newColumnName = prompt(t('table.new_column_prompt'));
+    if (newColumnName && !columns.includes(newColumnName)) {
+      setColumns(currentCols => [...currentCols, newColumnName]);
+      setData(currentData => currentData.map(row => ({ ...row, [newColumnName]: 0 })));
+      setIsPlotted(false);
+      setAnalysisResult(null);
+    } else if (newColumnName) {
+      setError(t('table.duplicate_column_error', { columnName: newColumnName }));
+    }
+  }, [columns, t]);
+
+  const handleDeleteColumn = useCallback((columnToDelete: string) => {
+    setColumns(currentCols => currentCols.filter(c => c !== columnToDelete));
+    setData(currentData => currentData.map(row => {
+      const newRow = { ...row };
+      delete newRow[columnToDelete];
+      return newRow;
+    }));
+    
+    if (independentVar === columnToDelete) setIndependentVar('');
+    if (dependentVar === columnToDelete) setDependentVar('');
+    setIsPlotted(false);
+    setAnalysisResult(null);
+  }, [independentVar, dependentVar]);
+
+  const handleAddRow = useCallback(() => {
+    setData(currentData => {
+      if (currentData.length === 0) {
+        const newRow = columns.reduce((acc, col) => ({ ...acc, [col]: 0 }), {});
+        return [newRow];
+      }
+      const newRow = Object.fromEntries(Object.keys(currentData[0]).map(key => [key, 0]));
+      return [...currentData, newRow];
+    });
+    setIsPlotted(false);
+    setAnalysisResult(null);
+  }, [columns]);
+  
+  const handleDeleteRow = useCallback((rowIndex: number) => {
+    setData(currentData => currentData.filter((_, i) => i !== rowIndex));
+    setIsPlotted(false);
+    setAnalysisResult(null);
+  }, []);
+
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isResizingLeft.current) {
@@ -153,6 +236,12 @@ export default function App() {
             data={data}
             independentVar={independentVar}
             dependentVar={dependentVar}
+            onCellChange={handleCellChange}
+            onColumnRename={handleColumnRename}
+            onAddColumn={handleAddColumn}
+            onDeleteColumn={handleDeleteColumn}
+            onAddRow={handleAddRow}
+            onDeleteRow={handleDeleteRow}
           />
           <StatusBar rowCount={data.length} status={error ? 'Error' : 'Ready'}/>
         </main>
