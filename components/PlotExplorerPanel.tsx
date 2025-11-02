@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
@@ -96,7 +95,7 @@ const triggerDownload = (href: string, filename: string) => {
 }
 
 export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
-  const { t } = useAppContext();
+  const { t, theme } = useAppContext();
   const { fileState, updateFileState } = useFileContext();
   
   if (!fileState) return null;
@@ -113,61 +112,106 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
     const svgElement = props.plotContainerRef.current?.querySelector('svg');
     if (!svgElement) return;
 
-    const { width, height, dpi, format, fileName } = exportConfig;
+    const { width, height, dpi, format, fileName, fontFamily, fontSize, title, xAxisLabel, yAxisLabel } = exportConfig;
+
+    // 1. Get all CSS rules from all stylesheets. This is more robust than inlining.
+    const cssRules = Array.from(document.styleSheets)
+        .map(sheet => {
+            try {
+                return Array.from(sheet.cssRules)
+                    .map(rule => rule.cssText)
+                    .join(' ');
+            } catch (e) {
+                console.warn('Cannot read stylesheet, likely a cross-origin security restriction.', sheet.href);
+                return '';
+            }
+        })
+        .join(' ');
     
-    // 1. Clone the SVG to avoid altering the live plot
+    // 2. Clone the SVG element
     const svgClone = svgElement.cloneNode(true) as SVGSVGElement;
-    
-    // 2. Set dimensions
+
+    // 3. Set explicit dimensions for export
     svgClone.setAttribute('width', `${width}`);
     svgClone.setAttribute('height', `${height}`);
-    svgClone.style.backgroundColor = getComputedStyle(svgElement).backgroundColor;
 
-    // 3. Inject a title
-    if (exportConfig.title) {
+    // 4. Create a <defs> and <style> element with all the captured CSS
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    style.setAttribute('type', 'text/css');
+    style.innerHTML = `<![CDATA[${cssRules}]]>`;
+    defs.appendChild(style);
+    svgClone.insertBefore(defs, svgClone.firstChild);
+
+    // 5. Add a background rectangle as the first rendered element
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('width', '100%');
+    rect.setAttribute('height', '100%');
+    const bgColor = theme === 'dark' ? '#282c34' : '#ffffff'; // from tailwind config
+    rect.setAttribute('fill', bgColor);
+    svgClone.insertBefore(rect, defs.nextSibling);
+
+    // 6. Update fonts, titles, and labels
+    const allTextElements = svgClone.querySelectorAll('text');
+    allTextElements.forEach(t => {
+        t.setAttribute('font-family', fontFamily);
+        t.setAttribute('font-size', `${fontSize}px`);
+    });
+
+    const findAxisLabel = (axisClass: string) => {
+        const labels = svgClone.querySelectorAll(`.${axisClass} .recharts-label text`);
+        return labels.length > 0 ? labels[labels.length - 1] : null;
+    };
+    const xAxisLabelEl = findAxisLabel('recharts-xaxis');
+    if (xAxisLabelEl) xAxisLabelEl.textContent = xAxisLabel;
+
+    const yAxisLabelEl = findAxisLabel('recharts-yaxis');
+    if (yAxisLabelEl) yAxisLabelEl.textContent = yAxisLabel;
+    
+    if (title) {
         const titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         titleEl.setAttribute('x', `${width / 2}`);
-        titleEl.setAttribute('y', '25');
+        titleEl.setAttribute('y', '30'); // Add some padding from the top
         titleEl.setAttribute('text-anchor', 'middle');
-        titleEl.setAttribute('font-size', `${exportConfig.fontSize * 1.2}px`);
-        titleEl.setAttribute('font-family', exportConfig.fontFamily);
-        titleEl.setAttribute('fill', getComputedStyle(svgElement.querySelector('.recharts-text') ?? svgElement).fill);
-        titleEl.textContent = exportConfig.title;
-        svgClone.prepend(titleEl);
+        titleEl.setAttribute('font-size', `${fontSize * 1.5}px`);
+        titleEl.setAttribute('font-family', fontFamily);
+        titleEl.setAttribute('font-weight', 'bold');
+        titleEl.setAttribute('fill', theme === 'dark' ? '#e5e7eb' : '#1f2937');
+        titleEl.textContent = title;
+        svgClone.appendChild(titleEl);
     }
-
-    // 4. Update axis labels and font styles
-    svgClone.querySelectorAll('text').forEach(t => {
-      t.setAttribute('font-family', exportConfig.fontFamily);
-      t.setAttribute('font-size', `${exportConfig.fontSize}px`);
-    });
-    const xAxisLabelEl = svgClone.querySelector('.recharts-xaxis .recharts-label text');
-    if (xAxisLabelEl) xAxisLabelEl.textContent = exportConfig.xAxisLabel;
-    const yAxisLabelEl = svgClone.querySelector('.recharts-yaxis .recharts-label text');
-    if (yAxisLabelEl) yAxisLabelEl.textContent = exportConfig.yAxisLabel;
-
-    // 5. Serialize to string
+    
+    // 7. Serialize and trigger download
     const svgString = new XMLSerializer().serializeToString(svgClone);
-    const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
-
+    
     if (format === 'svg') {
+      const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
       const url = URL.createObjectURL(svgBlob);
       triggerDownload(url, `${fileName}.svg`);
     } else { // PNG
       const image = new Image();
       image.onload = () => {
         const canvas = document.createElement('canvas');
-        const scale = dpi / 96; // 96 is default browser DPI
+        const scale = dpi / 96;
         canvas.width = width * scale;
         canvas.height = height * scale;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
+        
         ctx.scale(scale, scale);
-        ctx.drawImage(image, 0, 0);
+        ctx.drawImage(image, 0, 0, width, height);
+        
         const pngUrl = canvas.toDataURL('image/png');
         triggerDownload(pngUrl, `${fileName}.png`);
       };
-      image.src = URL.createObjectURL(svgBlob);
+      image.onerror = (err) => { 
+        console.error("SVG to PNG conversion failed.", err); 
+      };
+      
+      // Use a base64 data URL, which is more robust for loading SVGs into an Image object.
+      // The unescape(encodeURIComponent(...)) is a trick to handle UTF-8 characters correctly in btoa.
+      const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgString)))}`;
+      image.src = dataUrl;
     }
   }
 
