@@ -28,6 +28,7 @@
   "main.plot_placeholder_description": "Selecciona tus variables y haz clic en el botón 'Graficar Datos' en el explorador para visualizar tus datos.",
   "plot.observations": "Observaciones",
   "plot.regression_line": "Línea de Regresión",
+  "plot.controls_title": "Controles del Gráfico",
   "tooltip.residual": "Residuo",
   "analysis.show_grid": "Mostrar Rejilla",
   "analysis.show_line": "Mostrar Línea de Regresión",

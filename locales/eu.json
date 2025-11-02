@@ -28,6 +28,7 @@
   "main.plot_placeholder_description": "Hautatu zure aldagaiak eta egin klik 'Datuak Marraztu' botoian esploratzailean zure datuak ikusteko.",
   "plot.observations": "Behaketak",
   "plot.regression_line": "Erregresio Lerroa",
+  "plot.controls_title": "Grafikoaren Kontrolak",
   "tooltip.residual": "Hondarra",
   "analysis.show_grid": "Erakutsi Sarea",
   "analysis.show_line": "Erakutsi Erregresio Lerroa",

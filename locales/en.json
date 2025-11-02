@@ -28,6 +28,7 @@
   "main.plot_placeholder_description": "Select your variables and click the 'Plot Data' button in the explorer to visualize your data.",
   "plot.observations": "Observations",
   "plot.regression_line": "Regression Line",
+  "plot.controls_title": "Plot Controls",
   "tooltip.residual": "Residual",
   "analysis.show_grid": "Show Grid",
   "analysis.show_line": "Show Regression Line",

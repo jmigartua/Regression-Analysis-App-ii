@@ -9,5 +9,5 @@ export interface AnalysisResult {
   rSquared: number;
   stdErr: number;
   residuals: number[];
-  regressionLine: { x: number; y: number }[];
+  regressionLine: DataPoint[];
 }

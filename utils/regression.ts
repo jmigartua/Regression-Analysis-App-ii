@@ -47,8 +47,8 @@ export function calculateLinearRegression(
         stdErr: 0,
         residuals: validData.map(() => 0),
         regressionLine: [
-            { x: Math.min(...validData.map(d => d[xVar])), y: meanY },
-            { x: Math.max(...validData.map(d => d[xVar])), y: meanY }
+            { [xVar]: Math.min(...validData.map(d => d[xVar])), y: meanY },
+            { [xVar]: Math.max(...validData.map(d => d[xVar])), y: meanY }
         ]
     }
   }
@@ -67,9 +67,9 @@ export function calculateLinearRegression(
   const xValues = validData.map(d => d[xVar]);
   const minX = Math.min(...xValues);
   const maxX = Math.max(...xValues);
-  const regressionLine = [
-    { x: minX, y: intercept + slope * minX },
-    { x: maxX, y: intercept + slope * maxX }
+  const regressionLine: DataPoint[] = [
+    { [xVar]: minX, y: intercept + slope * minX },
+    { [xVar]: maxX, y: intercept + slope * maxX }
   ];
 
   return {

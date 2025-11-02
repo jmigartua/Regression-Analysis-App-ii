@@ -226,9 +226,11 @@ export default function App() {
           />
         </div>
         <div 
-            className="w-1 flex-shrink-0 bg-border dark:bg-dark-border cursor-col-resize hover:bg-accent"
+            className="w-1.5 flex-shrink-0 bg-border dark:bg-dark-border cursor-col-resize group flex items-center justify-center"
             onMouseDown={() => { isResizingLeft.current = true; document.body.style.cursor = 'col-resize'; }}
-        />
+        >
+            <div className="h-8 w-1 bg-gray-300 dark:bg-gray-600 rounded-full group-hover:bg-accent transition-colors"></div>
+        </div>
         <main className="flex-grow flex flex-col overflow-hidden">
           <MainPanel 
             isPlotted={isPlotted}

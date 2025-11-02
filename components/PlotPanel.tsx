@@ -6,7 +6,7 @@ import { useAppContext } from '../contexts/AppContext';
 
 interface PlotPanelProps {
   data: DataPoint[];
-  regressionLine?: { x: number; y: number }[];
+  regressionLine?: DataPoint[];
   independentVar: string;
   dependentVar: string;
   showGrid: boolean;
