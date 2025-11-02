@@ -5,21 +5,18 @@ import { useAppContext } from '../contexts/AppContext';
 
 interface StatusBarProps {
     rowCount: number;
-    isLoading: boolean;
     status: 'Ready' | 'Error';
 }
 
-export const StatusBar: React.FC<StatusBarProps> = ({ rowCount, isLoading, status }) => {
+export const StatusBar: React.FC<StatusBarProps> = ({ rowCount, status }) => {
     const { t } = useAppContext();
     
     const StatusIcon = () => {
-        if (isLoading) return <Loader className="w-3.5 h-3.5 mr-2 animate-spin text-accent" />;
         if (status === 'Error') return <AlertCircle className="w-3.5 h-3.5 mr-2 text-red-500" />;
         return <CheckCircle className="w-3.5 h-3.5 mr-2 text-text-tertiary dark:text-gray-500" />;
     };
 
     const statusText = () => {
-        if (isLoading) return t('header.analyzing');
         if (status === 'Error') return t('statusbar.error');
         return t('statusbar.ready');
     }

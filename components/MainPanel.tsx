@@ -1,10 +1,11 @@
 
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useMemo } from 'react';
 import { LayoutGrid, BarChart2 } from 'lucide-react';
 import { PlotPanel } from './PlotPanel';
 import { DataTable } from './DataTable';
 import { AnalysisPanel } from './AnalysisPanel';
 import { PlotExplorerPanel } from './PlotExplorerPanel';
+import { PlotToolbar, PlotTool } from './PlotToolbar';
 import type { AnalysisResult, DataPoint } from '../types';
 import { useAppContext } from '../contexts/AppContext';
 
@@ -59,11 +60,18 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     const mainPanelRef = useRef<HTMLDivElement>(null);
     const rightPanelRef = useRef<HTMLDivElement>(null);
     const topPanelRef = useRef<HTMLDivElement>(null);
+    const chartStateRef = useRef<any>(null);
 
     const [tablePanelWidth, setTablePanelWidth] = useState(400);
     const [plotExplorerWidth, setPlotExplorerWidth] = useState(256);
     const [topPanelHeight, setTopPanelHeight] = useState(60);
 
+    // Interactive Plot State
+    const [activeTool, setActiveTool] = useState<PlotTool | null>(null);
+    const [xAxisDomain, setXAxisDomain] = useState<[any, any]>(['dataMin', 'dataMax']);
+    const [yAxisDomain, setYAxisDomain] = useState<[any, any]>(['dataMin', 'dataMax']);
+    const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+    
     // Plot style state
     const [showGrid, setShowGrid] = useState(true);
     const [showLine, setShowLine] = useState(true);
@@ -84,6 +92,35 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     const [residualsWidth, setResidualsWidth] = useState(1.5);
     const [residualsStyle, setResidualsStyle] = useState('dashed');
 
+    const handleZoom = (factor: number) => {
+        if (!chartStateRef.current?.xAxisMap?.scale || !chartStateRef.current?.yAxisMap?.scale) return;
+
+        const { xAxisMap, yAxisMap } = chartStateRef.current;
+        const [xMin, xMax] = xAxisMap.scale.domain();
+        const [yMin, yMax] = yAxisMap.scale.domain();
+        
+        if(typeof xMin !== 'number' || typeof xMax !== 'number' || typeof yMin !== 'number' || typeof yMax !== 'number') return;
+
+        const xRange = xMax - xMin;
+        const yRange = yMax - yMin;
+        const newXRange = xRange * factor;
+        const newYRange = yRange * factor;
+        const xCenter = xMin + xRange / 2;
+        const yCenter = yMin + yRange / 2;
+
+        setXAxisDomain([xCenter - newXRange / 2, xCenter + newXRange / 2]);
+        setYAxisDomain([yCenter - newYRange / 2, yCenter + newYRange / 2]);
+    };
+
+    const handleResetView = useCallback(() => {
+        setXAxisDomain(['dataMin', 'dataMax']);
+        setYAxisDomain(['dataMin', 'dataMax']);
+        setActiveTool(null);
+    }, []);
+
+    const handleClearSelection = useCallback(() => {
+        setSelectedIndices(new Set());
+    }, []);
 
     const handleMouseDownTableResizer = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
@@ -159,6 +196,16 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         document.addEventListener('mouseup', handleMouseUp);
     }, []);
 
+    const unselectedData = useMemo(() => data.filter((d, i) => !selectedIndices.has(i)), [data, selectedIndices]);
+    const selectedData = useMemo(() => {
+        const selected = [];
+        for (const index of selectedIndices) {
+            if (data[index]) {
+                selected.push(data[index]);
+            }
+        }
+        return selected;
+    }, [data, selectedIndices]);
 
     if (data.length === 0) {
         return <div className="flex-grow overflow-y-auto p-6"><WorkspacePlaceholder /></div>;
@@ -175,6 +222,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                     onDeleteColumn={onDeleteColumn}
                     onAddRow={onAddRow}
                     onDeleteRow={onDeleteRow}
+                    selectedIndices={selectedIndices}
                 />
             </div>
             <div
@@ -186,13 +234,31 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             <div ref={rightPanelRef} className="flex-grow flex flex-col" style={{ width: `calc(100% - ${tablePanelWidth}px - 6px)` }}>
                 {isPlotted && analysisResult ? (
                     <>
-                        <div ref={topPanelRef} className="flex" style={{ height: `${topPanelHeight}%` }}>
+                        <div ref={topPanelRef} className="flex relative" style={{ height: `${topPanelHeight}%` }}>
+                            <PlotToolbar 
+                                activeTool={activeTool}
+                                setActiveTool={setActiveTool}
+                                onZoomIn={() => handleZoom(0.8)}
+                                onZoomOut={() => handleZoom(1.2)}
+                                onReset={handleResetView}
+                                onClearSelection={handleClearSelection}
+                                hasSelection={selectedIndices.size > 0}
+                            />
                             <div className="flex-grow p-4" style={{ width: `calc(100% - ${plotExplorerWidth}px - 6px)` }}>
                                 <PlotPanel
                                     data={data}
+                                    unselectedData={unselectedData}
+                                    selectedData={selectedData}
                                     analysisResult={analysisResult}
                                     independentVar={independentVar}
                                     dependentVar={dependentVar}
+                                    
+                                    chartStateRef={chartStateRef}
+                                    activeTool={activeTool}
+                                    xAxisDomain={xAxisDomain} setXAxisDomain={setXAxisDomain}
+                                    yAxisDomain={yAxisDomain} setYAxisDomain={setYAxisDomain}
+                                    selectedIndices={selectedIndices} setSelectedIndices={setSelectedIndices}
+
                                     showGrid={showGrid}
                                     showObservations={showObservations}
                                     showLine={showLine}

@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react';
 
 interface DataTableProps {
   data: (DataPoint & { residual?: number; predicted?: number })[];
+  selectedIndices: Set<number>;
   onCellChange: (rowIndex: number, column: string, value: any) => void;
   onColumnRename: (oldName: string, newName:string) => void;
   onAddColumn: () => void;
@@ -41,7 +42,7 @@ const ContextMenu: React.FC<{
 };
 
 
-export const DataTable: React.FC<DataTableProps> = ({ data, onCellChange, onColumnRename, onAddColumn, onDeleteColumn, onAddRow, onDeleteRow }) => {
+export const DataTable: React.FC<DataTableProps> = ({ data, selectedIndices, onCellChange, onColumnRename, onAddColumn, onDeleteColumn, onAddRow, onDeleteRow }) => {
   const { t } = useAppContext();
   const [editingCell, setEditingCell] = useState<{ row: number; col: string } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; type: 'col' | 'row'; target: string | number } | null>(null);
@@ -156,7 +157,11 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onCellChange, onColu
           </thead>
           <tbody>
             {data.map((row, rowIndex) => (
-              <tr key={rowIndex} className="bg-bg-default dark:bg-slate-800 border-b border-border dark:border-slate-700 hover:bg-black/5 dark:hover:bg-slate-700/50" onContextMenu={(e) => handleContextMenu(e, 'row', rowIndex)}>
+              <tr 
+                key={rowIndex} 
+                className={`border-b border-border dark:border-slate-700 transition-colors ${selectedIndices.has(rowIndex) ? 'bg-accent/20' : 'bg-bg-default dark:bg-slate-800 hover:bg-black/5 dark:hover:bg-slate-700/50'}`} 
+                onContextMenu={(e) => handleContextMenu(e, 'row', rowIndex)}
+              >
                 {columns.map((col) => (
                   <td key={`${rowIndex}-${col}`} className="px-6 py-2" onDoubleClick={() => setEditingCell({ row: rowIndex, col })}>
                     {editingCell?.row === rowIndex && editingCell?.col === col ? (
@@ -170,7 +175,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, onCellChange, onColu
                             className="bg-inherit text-inherit w-full outline-none p-2 -m-2 rounded focus:ring-1 focus:ring-accent"
                         />
                     ) : (
-                        typeof row[col] === 'number' ? (row[col] as number).toFixed(4) : row[col]
+                        typeof row[col] === 'number' ? (row[col] as number).toPrecision(4) : row[col]
                     )}
                   </td>
                 ))}

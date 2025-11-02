@@ -1,4 +1,3 @@
-
 import type { DataPoint, AnalysisResult } from '../types';
 
 export function calculateLinearRegression(
@@ -56,8 +55,8 @@ export function calculateLinearRegression(
         stdErrIntercept: 0,
         residuals,
         regressionLine: [
-            { [xVar]: Math.min(...validData.map(d => d[xVar])), y: meanY },
-            { [xVar]: Math.max(...validData.map(d => d[xVar])), y: meanY }
+            { [xVar]: Math.min(...validData.map(d => d[xVar])), [yVar]: meanY },
+            { [xVar]: Math.max(...validData.map(d => d[xVar])), [yVar]: meanY }
         ],
         residualPlotData,
     }
@@ -89,8 +88,8 @@ export function calculateLinearRegression(
   const minX = Math.min(...xValues);
   const maxX = Math.max(...xValues);
   const regressionLine: DataPoint[] = [
-    { [xVar]: minX, y: intercept + slope * minX },
-    { [xVar]: maxX, y: intercept + slope * maxX }
+    { [xVar]: minX, [yVar]: intercept + slope * minX },
+    { [xVar]: maxX, [yVar]: intercept + slope * maxX }
   ];
 
   return {
