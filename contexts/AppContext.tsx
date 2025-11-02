@@ -52,6 +52,8 @@ const translations: { [key in Language]: any } = {
     "analysis.tab_residuals": "Residuals Plot",
     "analysis.residual": "Residual",
     "analysis.residuals": "Residuals",
+    "analysis.controls_title": "Analysis Controls",
+    "analysis.decimal_points": "Decimal Points",
     "right_sidebar.equation": "Regression Equation",
     "results.summary": "Summary Statistics",
     "results.rsquared": "R-Squared",
@@ -79,7 +81,8 @@ const translations: { [key in Language]: any } = {
     "error.same_variables": "Independent and dependent variables cannot be the same.",
     "error.analysis_failed": "Analysis failed: {errorMessage}",
     "error.unknown": "An unknown error occurred.",
-    "error.unknown_analysis": "Could not perform regression. Check data for errors."
+    "error.not_enough_data": "Not enough valid data points for regression analysis (minimum 2 required).",
+    "error.identical_x": "All independent (X) variable values are identical. Cannot compute a unique regression line."
   },
   es: {
     "header.title": "IDE-ALR",
@@ -118,6 +121,8 @@ const translations: { [key in Language]: any } = {
     "analysis.tab_residuals": "Gráfico de Residuos",
     "analysis.residual": "Residuo",
     "analysis.residuals": "Residuos",
+    "analysis.controls_title": "Controles de Análisis",
+    "analysis.decimal_points": "Puntos Decimales",
     "right_sidebar.equation": "Ecuación de Regresión",
     "results.summary": "Estadísticas de Resumen",
     "results.rsquared": "R-Cuadrado",
@@ -145,7 +150,8 @@ const translations: { [key in Language]: any } = {
     "error.same_variables": "Las variables independiente y dependiente no pueden ser iguales.",
     "error.analysis_failed": "El análisis falló: {errorMessage}",
     "error.unknown": "Ocurrió un error desconocido.",
-    "error.unknown_analysis": "No se pudo realizar la regresión. Revisa los datos en busca de errores."
+    "error.not_enough_data": "No hay suficientes puntos de datos válidos para el análisis de regresión (se requieren 2 como mínimo).",
+    "error.identical_x": "Todos los valores de la variable independiente (X) son idénticos. No se puede calcular una línea de regresión única."
   },
   eu: {
     "header.title": "LRA-IDE",
@@ -184,6 +190,8 @@ const translations: { [key in Language]: any } = {
     "analysis.tab_residuals": "Hondarren Grafikoa",
     "analysis.residual": "Hondarra",
     "analysis.residuals": "Hondarrak",
+    "analysis.controls_title": "Analisiaren Kontrolak",
+    "analysis.decimal_points": "Puntu Hamartarrak",
     "right_sidebar.equation": "Erregresio Ekuazioa",
     "results.summary": "Laburpen Estatistikak",
     "results.rsquared": "R-Karratua",
@@ -211,7 +219,8 @@ const translations: { [key in Language]: any } = {
     "error.same_variables": "Aldagai askea eta mendeko aldagaia ezin dira berdinak izan.",
     "error.analysis_failed": "Azterketak huts egin du: {errorMessage}",
     "error.unknown": "Errore ezezagun bat gertatu da.",
-    "error.unknown_analysis": "Ezin izan da erregresioa egin. Egiaztatu datuetan errorerik dagoen."
+    "error.not_enough_data": "Ez dago datu-puntu baliozko nahikorik erregresio-analisirako (gutxienez 2 behar dira).",
+    "error.identical_x": "Aldagai independenteko (X) balio guztiak berdinak dira. Ezin da erregresio-lerro bakarra kalkulatu."
   }
 };
 

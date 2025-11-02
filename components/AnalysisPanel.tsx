@@ -42,6 +42,7 @@ const ResidualTooltip: React.FC<{ active?: boolean; payload?: any[]; independent
 export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independentVar, dependentVar, showGrid, onToggleGrid, showLine, onToggleLine }) => {
     const { t, theme } = useAppContext();
     const [activeTab, setActiveTab] = useState<'analysis' | 'residuals'>('analysis');
+    const [decimalPoints, setDecimalPoints] = useState(4);
     
     const tickColor = theme === 'dark' ? '#94a3b8' : '#6b7280';
     const gridColor = theme === 'dark' ? '#334155' : '#e5e7eb';
@@ -65,10 +66,28 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independen
             <div className="flex-grow overflow-y-auto p-4">
                 {activeTab === 'analysis' && (
                      <div className="flex space-x-8">
-                        <div className="flex-shrink-0 w-64">
-                            <ResultsPanel result={result} />
+                        <div className="flex-shrink-0 w-72">
+                            <ResultsPanel result={result} decimalPoints={decimalPoints} />
                         </div>
                         <div className="flex-grow space-y-4">
+                             <div>
+                                <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-3">{t('analysis.controls_title')}</h3>
+                                <div className="space-y-3">
+                                    <div className="flex items-center space-x-2">
+                                        <label htmlFor="decimal-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28">{t('analysis.decimal_points')}:</label>
+                                        <input
+                                            id="decimal-slider"
+                                            type="range"
+                                            min="1"
+                                            max="8"
+                                            value={decimalPoints}
+                                            onChange={(e) => setDecimalPoints(Number(e.target.value))}
+                                            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-sm font-mono w-4 text-right">{decimalPoints}</span>
+                                    </div>
+                                </div>
+                            </div>
                             <div>
                                 <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-3">{t('plot.controls_title')}</h3>
                                 <div className="flex space-x-6">
@@ -77,10 +96,10 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independen
                                 </div>
                             </div>
                             <div>
-                            <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-2">{t('right_sidebar.equation')}</h3>
-                            <div className="text-sm bg-bg-default dark:bg-dark-bg p-3 rounded font-mono break-words border border-border dark:border-dark-border">
-                                <span className="text-purple-500 dark:text-purple-400">{dependentVar}</span> = <span className="text-accent dark:text-accent">{result.intercept.toFixed(4)}</span> + <span className="text-accent dark:text-accent">{result.slope.toFixed(4)}</span> * <span className="text-green-500 dark:text-green-400">{independentVar}</span>
-                            </div>
+                                <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-2">{t('right_sidebar.equation')}</h3>
+                                <div className="text-sm bg-bg-default dark:bg-dark-bg p-3 rounded font-mono break-words border border-border dark:border-dark-border">
+                                    <span className="text-purple-500 dark:text-purple-400">{dependentVar}</span> = <span className="text-accent dark:text-accent">{result.intercept.toFixed(decimalPoints)}</span> + <span className="text-accent dark:text-accent">{result.slope.toFixed(decimalPoints)}</span> * <span className="text-green-500 dark:text-green-400">{independentVar}</span>
+                                </div>
                             </div>
                         </div>
                     </div>

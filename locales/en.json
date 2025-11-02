@@ -36,6 +36,8 @@
   "analysis.tab_residuals": "Residuals Plot",
   "analysis.residual": "Residual",
   "analysis.residuals": "Residuals",
+  "analysis.controls_title": "Analysis Controls",
+  "analysis.decimal_points": "Decimal Points",
   "right_sidebar.equation": "Regression Equation",
   "results.summary": "Summary Statistics",
   "results.rsquared": "R-Squared",
@@ -63,5 +65,6 @@
   "error.same_variables": "Independent and dependent variables cannot be the same.",
   "error.analysis_failed": "Analysis failed: {errorMessage}",
   "error.unknown": "An unknown error occurred.",
-  "error.unknown_analysis": "Could not perform regression. Check data for errors."
+  "error.not_enough_data": "Not enough valid data points for regression analysis (minimum 2 required).",
+  "error.identical_x": "All independent (X) variable values are identical. Cannot compute a unique regression line."
 }

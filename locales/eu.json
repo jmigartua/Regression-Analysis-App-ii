@@ -36,6 +36,8 @@
   "analysis.tab_residuals": "Hondarren Grafikoa",
   "analysis.residual": "Hondarra",
   "analysis.residuals": "Hondarrak",
+  "analysis.controls_title": "Analisiaren Kontrolak",
+  "analysis.decimal_points": "Puntu Hamartarrak",
   "right_sidebar.equation": "Erregresio Ekuazioa",
   "results.summary": "Laburpen Estatistikak",
   "results.rsquared": "R-Karratua",
@@ -63,5 +65,6 @@
   "error.same_variables": "Aldagai askea eta mendeko aldagaia ezin dira berdinak izan.",
   "error.analysis_failed": "Azterketak huts egin du: {errorMessage}",
   "error.unknown": "Errore ezezagun bat gertatu da.",
-  "error.unknown_analysis": "Ezin izan da erregresioa egin. Egiaztatu datuetan errorerik dagoen."
+  "error.not_enough_data": "Ez dago datu-puntu baliozko nahikorik erregresio-analisirako (gutxienez 2 behar dira).",
+  "error.identical_x": "Aldagai independenteko (X) balio guztiak berdinak dira. Ezin da erregresio-lerro bakarra kalkulatu."
 }

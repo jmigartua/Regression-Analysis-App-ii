@@ -36,6 +36,8 @@
   "analysis.tab_residuals": "Gráfico de Residuos",
   "analysis.residual": "Residuo",
   "analysis.residuals": "Residuos",
+  "analysis.controls_title": "Controles de Análisis",
+  "analysis.decimal_points": "Puntos Decimales",
   "right_sidebar.equation": "Ecuación de Regresión",
   "results.summary": "Estadísticas de Resumen",
   "results.rsquared": "R-Cuadrado",
@@ -63,5 +65,6 @@
   "error.same_variables": "Las variables independiente y dependiente no pueden ser iguales.",
   "error.analysis_failed": "El análisis falló: {errorMessage}",
   "error.unknown": "Ocurrió un error desconocido.",
-  "error.unknown_analysis": "No se pudo realizar la regresión. Revisa los datos en busca de errores."
+  "error.not_enough_data": "No hay suficientes puntos de datos válidos para el análisis de regresión (se requieren 2 como mínimo).",
+  "error.identical_x": "Todos los valores de la variable independiente (X) son idénticos. No se puede calcular una línea de regresión única."
 }

@@ -95,8 +95,21 @@ export default function App() {
       setAnalysisResult(result);
       setIsPlotted(true);
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : t('error.unknown_analysis');
-      setError(t('error.analysis_failed', { errorMessage }));
+      const errorCode = e instanceof Error ? e.message : 'UNKNOWN';
+      let errorMessage = '';
+
+      switch (errorCode) {
+        case 'NOT_ENOUGH_DATA':
+          errorMessage = t('error.not_enough_data');
+          break;
+        case 'IDENTICAL_X_VALUES':
+          errorMessage = t('error.identical_x');
+          break;
+        default:
+          errorMessage = t('error.analysis_failed', { errorMessage: errorCode });
+      }
+      
+      setError(errorMessage);
       console.error(e);
       setAnalysisResult(null);
       setIsPlotted(false);

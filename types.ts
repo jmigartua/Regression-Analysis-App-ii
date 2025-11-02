@@ -8,6 +8,8 @@ export interface AnalysisResult {
   intercept: number;
   rSquared: number;
   stdErr: number;
+  stdErrSlope: number;
+  stdErrIntercept: number;
   residuals: number[];
   regressionLine: DataPoint[];
   residualPlotData: DataPoint[];

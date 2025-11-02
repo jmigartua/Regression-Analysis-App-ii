@@ -13,7 +13,7 @@ export function calculateLinearRegression(
 
   const n = validData.length;
   if (n < 2) {
-    throw new Error("Not enough data points for regression.");
+    throw new Error("NOT_ENOUGH_DATA");
   }
 
   const sumX = validData.reduce((acc, d) => acc + d[xVar], 0);
@@ -24,6 +24,11 @@ export function calculateLinearRegression(
 
   const meanX = sumX / n;
   const meanY = sumY / n;
+
+  const sxx = sumX2 - (sumX * sumX) / n;
+  if (Math.abs(sxx) < 1e-9) {
+    throw new Error("IDENTICAL_X_VALUES");
+  }
 
   // Calculate slope (b1) and intercept (b0)
   const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
@@ -36,10 +41,7 @@ export function calculateLinearRegression(
     return acc + Math.pow(d[yVar] - predictedY, 2);
   }, 0);
   
-  // Handle case where all points are on the line
   if(Math.abs(ssTotal) < 1e-9) {
-    // If total sum of squares is 0, all y values are the same.
-    // If ssResidual is also 0, it's a perfect horizontal line fit.
     const residuals = validData.map(() => 0);
     const residualPlotData = validData.map((d, i) => ({
       [xVar]: d[xVar],
@@ -50,6 +52,8 @@ export function calculateLinearRegression(
         intercept,
         rSquared: 1,
         stdErr: 0,
+        stdErrSlope: 0,
+        stdErrIntercept: 0,
         residuals,
         regressionLine: [
             { [xVar]: Math.min(...validData.map(d => d[xVar])), y: meanY },
@@ -61,8 +65,14 @@ export function calculateLinearRegression(
 
   const rSquared = 1 - (ssResidual / ssTotal);
 
-  // Calculate standard error of the estimate
+  // Calculate standard error of the estimate (MSE)
   const stdErr = Math.sqrt(ssResidual / (n - 2));
+  const mse = stdErr * stdErr;
+
+  // Calculate standard errors for coefficients
+  const stdErrSlope = Math.sqrt(mse / sxx);
+  const stdErrIntercept = Math.sqrt(mse * (1 / n + (meanX * meanX) / sxx));
+
 
   // Calculate residuals and regression line
   const residuals = validData.map(d => {
@@ -88,6 +98,8 @@ export function calculateLinearRegression(
     intercept,
     rSquared,
     stdErr,
+    stdErrSlope,
+    stdErrIntercept,
     residuals,
     regressionLine,
     residualPlotData
