@@ -40,16 +40,22 @@ export function calculateLinearRegression(
   if(Math.abs(ssTotal) < 1e-9) {
     // If total sum of squares is 0, all y values are the same.
     // If ssResidual is also 0, it's a perfect horizontal line fit.
+    const residuals = validData.map(() => 0);
+    const residualPlotData = validData.map((d, i) => ({
+      [xVar]: d[xVar],
+      residual: residuals[i],
+    }));
     return {
         slope: 0,
         intercept,
         rSquared: 1,
         stdErr: 0,
-        residuals: validData.map(() => 0),
+        residuals,
         regressionLine: [
             { [xVar]: Math.min(...validData.map(d => d[xVar])), y: meanY },
             { [xVar]: Math.max(...validData.map(d => d[xVar])), y: meanY }
-        ]
+        ],
+        residualPlotData,
     }
   }
 
@@ -63,6 +69,11 @@ export function calculateLinearRegression(
     const predictedY = intercept + slope * d[xVar];
     return d[yVar] - predictedY;
   });
+
+  const residualPlotData = validData.map((d, i) => ({
+    [xVar]: d[xVar],
+    residual: residuals[i],
+  }));
 
   const xValues = validData.map(d => d[xVar]);
   const minX = Math.min(...xValues);
@@ -78,6 +89,7 @@ export function calculateLinearRegression(
     rSquared,
     stdErr,
     residuals,
-    regressionLine
+    regressionLine,
+    residualPlotData
   };
 }

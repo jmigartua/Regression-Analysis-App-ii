@@ -150,12 +150,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                             />
                         </div>
                         <div
-                            className="h-1.5 flex-shrink-0 bg-border dark:bg-dark-border cursor-row-resize group flex items-center justify-center"
+                            className="h-2 flex-shrink-0 bg-border dark:bg-dark-border cursor-row-resize group flex items-center justify-center hover:bg-accent/20 transition-colors"
                             onMouseDown={handleMouseDownHorizontal}
                         >
-                            <div className="w-8 h-1 bg-gray-300 dark:bg-gray-600 rounded-full group-hover:bg-accent transition-colors"></div>
+                            <div className="w-8 h-1 bg-gray-400 dark:bg-gray-600 rounded-full group-hover:bg-accent"></div>
                         </div>
-                        <div className="flex-shrink-0" style={{ height: `calc(100% - ${topPanelHeight}% - 6px)` }}>
+                        <div className="flex-shrink-0" style={{ height: `calc(100% - ${topPanelHeight}% - 8px)` }}>
                            <AnalysisPanel 
                                 result={analysisResult} 
                                 independentVar={independentVar}

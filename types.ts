@@ -10,4 +10,5 @@ export interface AnalysisResult {
   stdErr: number;
   residuals: number[];
   regressionLine: DataPoint[];
+  residualPlotData: DataPoint[];
 }
