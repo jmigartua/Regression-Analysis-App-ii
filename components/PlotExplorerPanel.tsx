@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
@@ -89,10 +90,7 @@ const triggerDownload = (href: string, filename: string) => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    if (href.startsWith('blob:')) {
-      URL.revokeObjectURL(href);
-    }
-}
+};
 
 export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
   const { t, theme } = useAppContext();
@@ -188,30 +186,40 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
       const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
       const url = URL.createObjectURL(svgBlob);
       triggerDownload(url, `${fileName}.svg`);
+      URL.revokeObjectURL(url);
     } else { // PNG
       const image = new Image();
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      const cleanup = () => {
+          URL.revokeObjectURL(url);
+      };
+
       image.onload = () => {
         const canvas = document.createElement('canvas');
         const scale = dpi / 96;
         canvas.width = width * scale;
         canvas.height = height * scale;
         const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        if (!ctx) {
+            cleanup();
+            return;
+        }
         
         ctx.scale(scale, scale);
         ctx.drawImage(image, 0, 0, width, height);
         
         const pngUrl = canvas.toDataURL('image/png');
         triggerDownload(pngUrl, `${fileName}.png`);
+        cleanup();
       };
       image.onerror = (err) => { 
-        console.error("SVG to PNG conversion failed.", err); 
+        console.error("SVG to PNG conversion failed.", err);
+        cleanup();
       };
       
-      // Use a base64 data URL, which is more robust for loading SVGs into an Image object.
-      // The unescape(encodeURIComponent(...)) is a trick to handle UTF-8 characters correctly in btoa.
-      const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgString)))}`;
-      image.src = dataUrl;
+      image.src = url;
     }
   }
 
