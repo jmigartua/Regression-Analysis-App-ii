@@ -47,7 +47,7 @@ export const PlotToolbar: React.FC<PlotToolbarProps> = ({ activeTool, setActiveT
     };
 
     return (
-        <div className="absolute top-2 right-24 bg-sidebar dark:bg-dark-sidebar/80 backdrop-blur-sm p-1 rounded-md shadow-lg border border-border dark:border-dark-border flex items-center space-x-1 z-10">
+        <div className="flex items-center space-x-1 p-1">
             <ToolButton tooltip="Pan" isActive={activeTool === 'pan'} onClick={() => handleToolClick('pan')}>
                 <Move className="w-5 h-5" />
             </ToolButton>

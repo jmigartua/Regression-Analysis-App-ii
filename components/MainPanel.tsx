@@ -234,47 +234,51 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             <div ref={rightPanelRef} className="flex-grow flex flex-col" style={{ width: `calc(100% - ${tablePanelWidth}px - 6px)` }}>
                 {isPlotted && analysisResult ? (
                     <>
-                        <div ref={topPanelRef} className="flex relative" style={{ height: `${topPanelHeight}%` }}>
-                            <PlotToolbar 
-                                activeTool={activeTool}
-                                setActiveTool={setActiveTool}
-                                onZoomIn={() => handleZoom(0.8)}
-                                onZoomOut={() => handleZoom(1.2)}
-                                onReset={handleResetView}
-                                onClearSelection={handleClearSelection}
-                                hasSelection={selectedIndices.size > 0}
-                            />
-                            <div className="flex-grow p-4" style={{ width: `calc(100% - ${plotExplorerWidth}px - 6px)` }}>
-                                <PlotPanel
-                                    data={data}
-                                    unselectedData={unselectedData}
-                                    selectedData={selectedData}
-                                    analysisResult={analysisResult}
-                                    independentVar={independentVar}
-                                    dependentVar={dependentVar}
-                                    
-                                    chartStateRef={chartStateRef}
-                                    activeTool={activeTool}
-                                    xAxisDomain={xAxisDomain} setXAxisDomain={setXAxisDomain}
-                                    yAxisDomain={yAxisDomain} setYAxisDomain={setYAxisDomain}
-                                    selectedIndices={selectedIndices} setSelectedIndices={setSelectedIndices}
+                        <div ref={topPanelRef} className="flex" style={{ height: `${topPanelHeight}%` }}>
+                            <div className="flex-grow flex flex-col" style={{ width: `calc(100% - ${plotExplorerWidth}px - 6px)` }}>
+                                <div className="flex-shrink-0 border-b border-border dark:border-dark-border">
+                                    <PlotToolbar 
+                                        activeTool={activeTool}
+                                        setActiveTool={setActiveTool}
+                                        onZoomIn={() => handleZoom(0.8)}
+                                        onZoomOut={() => handleZoom(1.2)}
+                                        onReset={handleResetView}
+                                        onClearSelection={handleClearSelection}
+                                        hasSelection={selectedIndices.size > 0}
+                                    />
+                                </div>
+                                <div className="flex-grow p-4">
+                                    <PlotPanel
+                                        data={data}
+                                        unselectedData={unselectedData}
+                                        selectedData={selectedData}
+                                        analysisResult={analysisResult}
+                                        independentVar={independentVar}
+                                        dependentVar={dependentVar}
+                                        
+                                        chartStateRef={chartStateRef}
+                                        activeTool={activeTool}
+                                        xAxisDomain={xAxisDomain} setXAxisDomain={setXAxisDomain}
+                                        yAxisDomain={yAxisDomain} setYAxisDomain={setYAxisDomain}
+                                        selectedIndices={selectedIndices} setSelectedIndices={setSelectedIndices}
 
-                                    showGrid={showGrid}
-                                    showObservations={showObservations}
-                                    showLine={showLine}
-                                    showResiduals={showResiduals}
-                                    scatterColor={scatterColor}
-                                    scatterOpacity={scatterOpacity}
-                                    scatterSize={scatterSize}
-                                    lineColor={lineColor}
-                                    lineOpacity={lineOpacity}
-                                    lineWidth={lineWidth}
-                                    lineStyle={lineStyle}
-                                    residualsColor={residualsColor}
-                                    residualsOpacity={residualsOpacity}
-                                    residualsWidth={residualsWidth}
-                                    residualsStyle={residualsStyle}
-                                />
+                                        showGrid={showGrid}
+                                        showObservations={showObservations}
+                                        showLine={showLine}
+                                        showResiduals={showResiduals}
+                                        scatterColor={scatterColor}
+                                        scatterOpacity={scatterOpacity}
+                                        scatterSize={scatterSize}
+                                        lineColor={lineColor}
+                                        lineOpacity={lineOpacity}
+                                        lineWidth={lineWidth}
+                                        lineStyle={lineStyle}
+                                        residualsColor={residualsColor}
+                                        residualsOpacity={residualsOpacity}
+                                        residualsWidth={residualsWidth}
+                                        residualsStyle={residualsStyle}
+                                    />
+                                </div>
                             </div>
                             <div
                                 className="w-1.5 flex-shrink-0 bg-border dark:bg-dark-border cursor-col-resize group flex items-center justify-center"
