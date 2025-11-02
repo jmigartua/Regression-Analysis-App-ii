@@ -1,6 +1,6 @@
 
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { AlertTriangle, X, LayoutGrid } from 'lucide-react';
 import { calculateLinearRegression } from './utils/regression';
 import type { AnalysisResult, DataPoint } from './types';
 import { parseCSV, fileToText } from './utils/csvParser';
@@ -8,8 +8,8 @@ import { parseCSV, fileToText } from './utils/csvParser';
 import { Header } from './components/Header';
 import { ActivityBar } from './components/ActivityBar';
 import { LeftSidebar } from './components/LeftSidebar';
-import { MainPanel } from './components/MainPanel';
 import { StatusBar } from './components/StatusBar';
+import { FileWorkspace } from './components/FileWorkspace';
 import { useAppContext } from './contexts/AppContext';
 
 const ErrorMessage: React.FC<{ message: string; onClose: () => void }> = ({ message, onClose }) => (
@@ -33,6 +33,7 @@ export default function App() {
   const [isPlotted, setIsPlotted] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [selectedRowIndices, setSelectedRowIndices] = useState<Set<number>>(new Set());
+  const [activeTab, setActiveTab] = useState<'analysis' | 'simulation'>('analysis');
 
   const [leftPanelWidth, setLeftPanelWidth] = useState(256);
   
@@ -50,6 +51,7 @@ export default function App() {
       setColumns([]);
       setIndependentVar('');
       setDependentVar('');
+      setActiveTab('analysis');
 
       try {
         const textContent = await fileToText(selectedFile);
@@ -75,7 +77,6 @@ export default function App() {
         setColumns([]);
         setAnalysisResult(null);
         setIsPlotted(false);
-        // FIX: Specify type for new Set to avoid it being typed as Set<unknown>.
         setSelectedRowIndices(new Set<number>());
     }
   }, [t]);
@@ -211,7 +212,6 @@ export default function App() {
   const handleDeleteRow = useCallback((rowIndex: number) => {
     setData(currentData => currentData.filter((_, i) => i !== rowIndex));
     setSelectedRowIndices(currentIndices => {
-        // FIX: Specify type for new Set to avoid it being typed as Set<unknown>.
         const newIndices = new Set<number>();
         currentIndices.forEach(i => {
             if (i < rowIndex) newIndices.add(i);
@@ -224,7 +224,8 @@ export default function App() {
     const handleDeleteSelectedRows = useCallback(() => {
         if (selectedRowIndices.size === 0) return;
 
-        const indicesToDelete = Array.from(selectedRowIndices).sort((a, b) => b - a);
+        // Fix: Explicitly type `a` and `b` as numbers to resolve TS inference issue.
+        const indicesToDelete = Array.from(selectedRowIndices).sort((a: number, b: number) => b - a);
         
         setData(currentData => {
             const newData = [...currentData];
@@ -234,8 +235,6 @@ export default function App() {
             return newData;
         });
         
-        // After deletion, all selections are invalid.
-        // FIX: Specify type for new Set to avoid it being typed as Set<unknown>.
         setSelectedRowIndices(new Set<number>());
     }, [selectedRowIndices]);
 
@@ -255,7 +254,6 @@ export default function App() {
       if (selectAll) {
           setSelectedRowIndices(new Set(data.map((_, i) => i)));
       } else {
-          // FIX: Specify type for new Set to avoid it being typed as Set<unknown>.
           setSelectedRowIndices(new Set<number>());
       }
   }, [data]);
@@ -279,6 +277,16 @@ export default function App() {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   }, []);
+
+  const WorkspacePlaceholder: React.FC = () => {
+    const { t } = useAppContext();
+    return (
+    <div className="flex flex-col items-center justify-center h-full text-center text-text-tertiary dark:text-gray-500">
+        <LayoutGrid className="w-16 h-16 mb-4" />
+        <h3 className="text-xl font-semibold text-text-secondary dark:text-gray-400">{t('main.workspace_title')}</h3>
+        <p className="mt-2 max-w-sm">{t('main.workspace_description')}</p>
+    </div>
+  )};
 
 
   return (
@@ -305,23 +313,29 @@ export default function App() {
             <div className="h-8 w-1 bg-gray-300 dark:bg-gray-600 rounded-full group-hover:bg-accent transition-colors"></div>
         </div>
         <main className="flex-grow flex flex-col overflow-hidden">
-          <MainPanel 
-            isPlotted={isPlotted}
-            analysisResult={analysisResult}
-            data={data}
-            selectedRowIndices={selectedRowIndices}
-            independentVar={independentVar}
-            dependentVar={dependentVar}
-            onCellChange={handleCellChange}
-            onColumnRename={handleColumnRename}
-            onAddColumn={handleAddColumn}
-            onDeleteColumn={handleDeleteColumn}
-            onAddRow={handleAddRow}
-            onDeleteRow={handleDeleteRow}
-            onDeleteSelectedRows={handleDeleteSelectedRows}
-            onRowSelectionChange={handleRowSelectionChange}
-            onSelectAllRows={handleSelectAllRows}
-          />
+          {file ? (
+             <FileWorkspace
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                isPlotted={isPlotted}
+                analysisResult={analysisResult}
+                data={data}
+                selectedRowIndices={selectedRowIndices}
+                independentVar={independentVar}
+                dependentVar={dependentVar}
+                onCellChange={handleCellChange}
+                onColumnRename={handleColumnRename}
+                onAddColumn={handleAddColumn}
+                onDeleteColumn={handleDeleteColumn}
+                onAddRow={handleAddRow}
+                onDeleteRow={handleDeleteRow}
+                onDeleteSelectedRows={handleDeleteSelectedRows}
+                onRowSelectionChange={handleRowSelectionChange}
+                onSelectAllRows={handleSelectAllRows}
+             />
+          ) : (
+            <div className="flex-grow overflow-y-auto p-6"><WorkspacePlaceholder /></div>
+          )}
           <StatusBar rowCount={data.length} status={error ? 'Error' : 'Ready'}/>
         </main>
       </div>

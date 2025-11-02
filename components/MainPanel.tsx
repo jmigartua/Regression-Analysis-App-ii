@@ -26,16 +26,6 @@ interface MainPanelProps {
     onSelectAllRows: (selectAll: boolean) => void;
 }
 
-const WorkspacePlaceholder: React.FC = () => {
-    const { t } = useAppContext();
-    return (
-    <div className="flex flex-col items-center justify-center h-full text-center text-text-tertiary dark:text-gray-500">
-        <LayoutGrid className="w-16 h-16 mb-4" />
-        <h3 className="text-xl font-semibold text-text-secondary dark:text-gray-400">{t('main.workspace_title')}</h3>
-        <p className="mt-2 max-w-sm">{t('main.workspace_description')}</p>
-    </div>
-)};
-
 const PlotPlaceholder: React.FC = () => {
     const { t } = useAppContext();
     return (
@@ -270,10 +260,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         });
     }, [data, analysisResult, selectedRowIndices, independentVar, isPlotted]);
 
-
-    if (data.length === 0) {
-        return <div className="flex-grow overflow-y-auto p-6"><WorkspacePlaceholder /></div>;
-    }
 
     return (
         <div ref={mainPanelRef} className="flex-grow flex bg-panel dark:bg-dark-panel overflow-hidden">
