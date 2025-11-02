@@ -61,6 +61,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     const [topPanelHeight, setTopPanelHeight] = useState(60);
     const [showGrid, setShowGrid] = useState(true);
     const [showLine, setShowLine] = useState(true);
+    const [showResiduals, setShowResiduals] = useState(true);
 
     const handleMouseDownVertical = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
@@ -147,6 +148,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                                 dependentVar={dependentVar}
                                 showGrid={showGrid}
                                 showLine={showLine}
+                                showResiduals={showResiduals}
+                                analysisResult={analysisResult}
                             />
                         </div>
                         <div
@@ -162,8 +165,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                                 dependentVar={dependentVar}
                                 showGrid={showGrid}
                                 showLine={showLine}
+                                showResiduals={showResiduals}
                                 onToggleGrid={setShowGrid}
                                 onToggleLine={setShowLine}
+                                onToggleResiduals={setShowResiduals}
                             />
                         </div>
                     </>

@@ -13,6 +13,8 @@ interface AnalysisPanelProps {
   onToggleGrid: (show: boolean) => void;
   showLine: boolean;
   onToggleLine: (show: boolean) => void;
+  showResiduals: boolean;
+  onToggleResiduals: (show: boolean) => void;
 }
 
 const Toggle: React.FC<{ label: string; checked: boolean; onChange: (checked: boolean) => void }> = ({ label, checked, onChange }) => (
@@ -39,7 +41,7 @@ const ResidualTooltip: React.FC<{ active?: boolean; payload?: any[]; independent
 };
 
 
-export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independentVar, dependentVar, showGrid, onToggleGrid, showLine, onToggleLine }) => {
+export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independentVar, dependentVar, showGrid, onToggleGrid, showLine, onToggleLine, showResiduals, onToggleResiduals }) => {
     const { t, theme } = useAppContext();
     const [activeTab, setActiveTab] = useState<'analysis' | 'residuals'>('analysis');
     const [decimalPoints, setDecimalPoints] = useState(4);
@@ -65,16 +67,14 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independen
             </div>
             <div className="flex-grow overflow-y-auto p-4">
                 {activeTab === 'analysis' && (
-                     <div className="flex space-x-8">
-                        <div className="flex-shrink-0 w-72">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-6">
                             <ResultsPanel result={result} decimalPoints={decimalPoints} />
-                        </div>
-                        <div className="flex-grow space-y-4">
-                             <div>
-                                <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-3">{t('analysis.controls_title')}</h3>
-                                <div className="space-y-3">
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-3">{t('analysis.controls_title')}</h3>
                                     <div className="flex items-center space-x-2">
-                                        <label htmlFor="decimal-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28">{t('analysis.decimal_points')}:</label>
+                                        <label htmlFor="decimal-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('analysis.decimal_points')}:</label>
                                         <input
                                             id="decimal-slider"
                                             type="range"
@@ -87,18 +87,27 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independen
                                         <span className="text-sm font-mono w-4 text-right">{decimalPoints}</span>
                                     </div>
                                 </div>
-                            </div>
-                            <div>
-                                <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-3">{t('plot.controls_title')}</h3>
-                                <div className="flex space-x-6">
-                                    <Toggle label={t('analysis.show_grid')} checked={showGrid} onChange={onToggleGrid} />
-                                    <Toggle label={t('analysis.show_line')} checked={showLine} onChange={onToggleLine} />
+                                <div>
+                                    <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-3">{t('plot.controls_title')}</h3>
+                                    <div className="flex flex-col space-y-3 items-start">
+                                        <Toggle label={t('analysis.show_grid')} checked={showGrid} onChange={onToggleGrid} />
+                                        <Toggle label={t('analysis.show_line')} checked={showLine} onChange={onToggleLine} />
+                                        <Toggle label={t('analysis.show_residuals')} checked={showResiduals} onChange={onToggleResiduals} />
+                                    </div>
                                 </div>
                             </div>
-                            <div>
+                        </div>
+                        <div className="space-y-6">
+                             <div>
                                 <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-2">{t('right_sidebar.equation')}</h3>
                                 <div className="text-sm bg-bg-default dark:bg-dark-bg p-3 rounded font-mono break-words border border-border dark:border-dark-border">
                                     <span className="text-purple-500 dark:text-purple-400">{dependentVar}</span> = <span className="text-accent dark:text-accent">{result.intercept.toFixed(decimalPoints)}</span> + <span className="text-accent dark:text-accent">{result.slope.toFixed(decimalPoints)}</span> * <span className="text-green-500 dark:text-green-400">{independentVar}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-xs font-bold uppercase text-text-secondary dark:text-gray-400 tracking-wider mb-3">{t('analysis.fitting_options_title')}</h3>
+                                <div className="p-4 h-32 bg-bg-default dark:bg-dark-bg border border-dashed border-border dark:border-dark-border rounded-md flex items-center justify-center text-center text-sm text-text-tertiary">
+                                    <p>{t('analysis.fitting_options_placeholder')}</p>
                                 </div>
                             </div>
                         </div>
