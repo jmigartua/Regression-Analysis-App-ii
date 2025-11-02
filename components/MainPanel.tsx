@@ -13,6 +13,7 @@ interface MainPanelProps {
     isPlotted: boolean;
     analysisResult: AnalysisResult | null;
     data: DataPoint[];
+    selectedRowIndices: Set<number>;
     independentVar: string;
     dependentVar: string;
     onCellChange: (rowIndex: number, column: string, value: any) => void;
@@ -21,6 +22,8 @@ interface MainPanelProps {
     onDeleteColumn: (columnName: string) => void;
     onAddRow: () => void;
     onDeleteRow: (rowIndex: number) => void;
+    onRowSelectionChange: (rowIndex: number, isSelected: boolean) => void;
+    onSelectAllRows: (selectAll: boolean) => void;
 }
 
 const WorkspacePlaceholder: React.FC = () => {
@@ -48,6 +51,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     isPlotted, 
     analysisResult, 
     data, 
+    selectedRowIndices,
     independentVar, 
     dependentVar,
     onCellChange,
@@ -55,7 +59,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     onAddColumn,
     onDeleteColumn,
     onAddRow,
-    onDeleteRow 
+    onDeleteRow,
+    onRowSelectionChange,
+    onSelectAllRows
 }) => {
     const mainPanelRef = useRef<HTMLDivElement>(null);
     const rightPanelRef = useRef<HTMLDivElement>(null);
@@ -196,16 +202,38 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         document.addEventListener('mouseup', handleMouseUp);
     }, []);
 
-    const unselectedData = useMemo(() => data.filter((d, i) => !selectedIndices.has(i)), [data, selectedIndices]);
-    const selectedData = useMemo(() => {
-        const selected = [];
-        for (const index of selectedIndices) {
-            if (data[index]) {
-                selected.push(data[index]);
+    const { 
+        unselectedData, 
+        selectedData, 
+        inactiveData,
+        residualsData
+    } = useMemo(() => {
+        const unselected: DataPoint[] = [];
+        const selected: DataPoint[] = [];
+        const inactive: DataPoint[] = [];
+        const residuals: DataPoint[] = [];
+
+        data.forEach((d, i) => {
+            if (selectedRowIndices.has(i)) { // Is the row checked?
+                residuals.push(d);
+                if (selectedIndices.has(i)) { // Is it highlighted by box-select?
+                    selected.push(d);
+                } else {
+                    unselected.push(d);
+                }
+            } else { // Row is not checked
+                inactive.push(d);
             }
-        }
-        return selected;
-    }, [data, selectedIndices]);
+        });
+
+        return { 
+            unselectedData: unselected, 
+            selectedData: selected, 
+            inactiveData: inactive,
+            residualsData: residuals
+        };
+    }, [data, selectedRowIndices, selectedIndices]);
+
 
     if (data.length === 0) {
         return <div className="flex-grow overflow-y-auto p-6"><WorkspacePlaceholder /></div>;
@@ -223,6 +251,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                     onAddRow={onAddRow}
                     onDeleteRow={onDeleteRow}
                     selectedIndices={selectedIndices}
+                    selectedRowIndices={selectedRowIndices}
+                    onRowSelectionChange={onRowSelectionChange}
+                    onSelectAllRows={onSelectAllRows}
                 />
             </div>
             <div
@@ -250,6 +281,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                                 <div className="flex-grow p-4">
                                     <PlotPanel
                                         data={data}
+                                        residualsData={residualsData}
+                                        inactiveData={inactiveData}
                                         unselectedData={unselectedData}
                                         selectedData={selectedData}
                                         analysisResult={analysisResult}

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, ReferenceArea } from 'recharts';
 import type { DataPoint, AnalysisResult } from '../types';
@@ -6,6 +7,8 @@ import { PlotTool } from './PlotToolbar';
 
 interface PlotPanelProps {
   data: DataPoint[];
+  residualsData: DataPoint[];
+  inactiveData: DataPoint[];
   unselectedData: DataPoint[];
   selectedData: DataPoint[];
   independentVar: string;
@@ -78,7 +81,7 @@ const ResidualLine = (props: any) => {
 };
 
 export const PlotPanel: React.FC<PlotPanelProps> = ({ 
-    data, unselectedData, selectedData, independentVar, dependentVar, analysisResult,
+    data, residualsData, inactiveData, unselectedData, selectedData, independentVar, dependentVar, analysisResult,
     chartStateRef, activeTool, xAxisDomain, setXAxisDomain, yAxisDomain, setYAxisDomain, selectedIndices, setSelectedIndices,
     showGrid, showObservations, showLine, showResiduals,
     scatterColor, scatterOpacity, scatterSize,
@@ -177,13 +180,14 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({
                     
                     {showObservations && (
                         <>
+                            <Scatter name="Inactive" data={inactiveData} fill="#9ca3af" fillOpacity={0.3} shape="circle" legendType="none" size={scatterBaseSize} />
                             <Scatter name={t('plot.observations')} data={unselectedData} fill={scatterColor} fillOpacity={scatterOpacity} shape="circle" legendType="circle" size={scatterBaseSize} />
                             <Scatter name="Selected" data={selectedData} fill="#f97316" fillOpacity={1} shape="circle" legendType="none" size={scatterBaseSize * 1.5} zIndex={100} />
                         </>
                     )}
 
                     {showResiduals && analysisResult && (
-                        <Scatter isAnimationActive={false} data={data} fill="transparent" shape={(props) => <ResidualLine {...props} independentVar={independentVar} analysisResult={analysisResult} color={residualsColor} opacity={residualsOpacity} width={residualsWidth} style={residualsStyle} />} key={`residuals-${data.length}`} />
+                        <Scatter isAnimationActive={false} data={residualsData} fill="transparent" shape={(props) => <ResidualLine {...props} independentVar={independentVar} analysisResult={analysisResult} color={residualsColor} opacity={residualsOpacity} width={residualsWidth} style={residualsStyle} />} key={`residuals-${residualsData.length}`} />
                     )}
                     
                     {analysisResult?.regressionLine && showLine && <Line name={t('plot.regression_line')} type="monotone" dataKey={dependentVar} data={analysisResult.regressionLine} stroke={lineColor} strokeOpacity={lineOpacity} dot={false} activeDot={false} strokeWidth={lineWidth} strokeDasharray={getDashArray(lineStyle)} legendType="line" />}

@@ -32,6 +32,7 @@ export default function App() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isPlotted, setIsPlotted] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const [selectedRowIndices, setSelectedRowIndices] = useState<Set<number>>(new Set());
 
   const [leftPanelWidth, setLeftPanelWidth] = useState(256);
   
@@ -63,6 +64,7 @@ export default function App() {
         setColumns(parsedColumns);
         setIndependentVar(parsedColumns[0]);
         setDependentVar(parsedColumns[1]);
+        setSelectedRowIndices(new Set(parsedData.map((_, i) => i)));
       } catch (e) {
         setError(t('error.parse_failed'));
         console.error(e);
@@ -73,12 +75,15 @@ export default function App() {
         setColumns([]);
         setAnalysisResult(null);
         setIsPlotted(false);
+        setSelectedRowIndices(new Set());
     }
   }, [t]);
+  
+  const activeData = useMemo(() => data.filter((_, index) => selectedRowIndices.has(index)), [data, selectedRowIndices]);
 
   useEffect(() => {
-    if (!isPlotted || data.length < 2 || !independentVar || !dependentVar) {
-      if (isPlotted) { // Only clear if we were previously plotting
+    if (!isPlotted || activeData.length < 2 || !independentVar || !dependentVar) {
+      if (isPlotted) { 
         setAnalysisResult(null);
       }
       return;
@@ -91,7 +96,7 @@ export default function App() {
     }
     
     try {
-      const result = calculateLinearRegression(data, independentVar, dependentVar);
+      const result = calculateLinearRegression(activeData, independentVar, dependentVar);
       setAnalysisResult(result);
       setError(''); // Clear previous errors
     } catch (e) {
@@ -113,7 +118,7 @@ export default function App() {
       console.error(e);
       setAnalysisResult(null);
     }
-  }, [data, independentVar, dependentVar, isPlotted, t]);
+  }, [activeData, independentVar, dependentVar, isPlotted, t]);
 
 
   const handlePlot = useCallback(() => {
@@ -129,7 +134,7 @@ export default function App() {
     setError('');
     setIsPlotted(true);
     // The useEffect will now run the analysis
-  }, [data.length, independentVar, dependentVar, t]);
+  }, [data.length, independentVar, dependentVar]);
   
   const handleCellChange = useCallback((rowIndex: number, column: string, value: any) => {
     setData(currentData => {
@@ -188,18 +193,51 @@ export default function App() {
 
   const handleAddRow = useCallback(() => {
     setData(currentData => {
-      if (currentData.length === 0) {
-        const newRow = columns.reduce((acc, col) => ({ ...acc, [col]: 0 }), {});
-        return [newRow];
-      }
-      const newRow = Object.fromEntries(Object.keys(currentData[0]).map(key => [key, 0]));
-      return [...currentData, newRow];
+      const newData = [...currentData];
+      const newRow = columns.reduce((acc, col) => ({ ...acc, [col]: 0 }), {});
+      newData.push(newRow);
+      
+      setSelectedRowIndices(currentIndices => {
+        const newIndices = new Set(currentIndices);
+        newIndices.add(newData.length - 1); // Select the new row
+        return newIndices;
+      });
+
+      return newData;
     });
   }, [columns]);
   
   const handleDeleteRow = useCallback((rowIndex: number) => {
     setData(currentData => currentData.filter((_, i) => i !== rowIndex));
+    setSelectedRowIndices(currentIndices => {
+        const newIndices = new Set();
+        currentIndices.forEach(i => {
+            if (i < rowIndex) newIndices.add(i);
+            else if (i > rowIndex) newIndices.add(i - 1);
+        });
+        return newIndices;
+    });
   }, []);
+
+  const handleRowSelectionChange = useCallback((rowIndex: number, isSelected: boolean) => {
+    setSelectedRowIndices(currentIndices => {
+        const newIndices = new Set(currentIndices);
+        if (isSelected) {
+            newIndices.add(rowIndex);
+        } else {
+            newIndices.delete(rowIndex);
+        }
+        return newIndices;
+    });
+  }, []);
+
+  const handleSelectAllRows = useCallback((selectAll: boolean) => {
+      if (selectAll) {
+          setSelectedRowIndices(new Set(data.map((_, i) => i)));
+      } else {
+          setSelectedRowIndices(new Set());
+      }
+  }, [data]);
 
   const handleMouseDownLeft = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -250,6 +288,7 @@ export default function App() {
             isPlotted={isPlotted}
             analysisResult={analysisResult}
             data={data}
+            selectedRowIndices={selectedRowIndices}
             independentVar={independentVar}
             dependentVar={dependentVar}
             onCellChange={handleCellChange}
@@ -258,6 +297,8 @@ export default function App() {
             onDeleteColumn={handleDeleteColumn}
             onAddRow={handleAddRow}
             onDeleteRow={handleDeleteRow}
+            onRowSelectionChange={handleRowSelectionChange}
+            onSelectAllRows={handleSelectAllRows}
           />
           <StatusBar rowCount={data.length} status={error ? 'Error' : 'Ready'}/>
         </main>
