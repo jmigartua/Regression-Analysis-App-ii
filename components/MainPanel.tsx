@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useCallback, useMemo } from 'react';
 import { LayoutGrid, BarChart2 } from 'lucide-react';
 import { PlotPanel } from './PlotPanel';
@@ -116,7 +115,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         const xCenter = xMin + xRange / 2;
         const yCenter = yMin + yRange / 2;
 
-        setXAxisDomain([xCenter - newXRange / 2, xCenter + newXRange / 2]);
+        setXAxisDomain([xCenter - newXRange / 2, xCenter + newYRange / 2]);
         setYAxisDomain([yCenter - newYRange / 2, yCenter + newYRange / 2]);
     };
 
@@ -210,29 +209,36 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         inactiveData,
         residualsData
     } = useMemo(() => {
-        const unselected: DataPoint[] = [];
-        const selected: DataPoint[] = [];
-        const inactive: DataPoint[] = [];
-        const residuals: DataPoint[] = [];
+        const activePlotData: DataPoint[] = [];
+        const inactivePlotData: DataPoint[] = [];
+        
+        // Use a map to easily get the original index of a data point object.
+        // This is safer than relying on array indices after filtering.
+        const dataPointToOriginalIndex = new Map<DataPoint, number>();
+        data.forEach((d, i) => {
+            dataPointToOriginalIndex.set(d, i);
+        });
 
         data.forEach((d, i) => {
-            if (selectedRowIndices.has(i)) { // Is the row checked?
-                residuals.push(d);
-                if (selectedIndices.has(i)) { // Is it highlighted by box-select?
-                    selected.push(d);
-                } else {
-                    unselected.push(d);
-                }
-            } else { // Row is not checked
-                inactive.push(d);
+            if (selectedRowIndices.has(i)) {
+                activePlotData.push(d);
+            } else {
+                inactivePlotData.push(d);
             }
         });
 
+        const selectedPlotData = activePlotData.filter((d) => {
+            const originalIndex = dataPointToOriginalIndex.get(d);
+            return originalIndex !== undefined && selectedIndices.has(originalIndex);
+        });
+        
+        const unselectedPlotData = activePlotData.filter(d => !selectedPlotData.includes(d));
+
         return { 
-            unselectedData: unselected, 
-            selectedData: selected, 
-            inactiveData: inactive,
-            residualsData: residuals
+            unselectedData: unselectedPlotData, 
+            selectedData: selectedPlotData, 
+            inactiveData: inactivePlotData,
+            residualsData: activePlotData
         };
     }, [data, selectedRowIndices, selectedIndices]);
 

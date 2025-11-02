@@ -75,7 +75,8 @@ export default function App() {
         setColumns([]);
         setAnalysisResult(null);
         setIsPlotted(false);
-        setSelectedRowIndices(new Set());
+        // FIX: Specify type for new Set to avoid it being typed as Set<unknown>.
+        setSelectedRowIndices(new Set<number>());
     }
   }, [t]);
   
@@ -210,7 +211,8 @@ export default function App() {
   const handleDeleteRow = useCallback((rowIndex: number) => {
     setData(currentData => currentData.filter((_, i) => i !== rowIndex));
     setSelectedRowIndices(currentIndices => {
-        const newIndices = new Set();
+        // FIX: Specify type for new Set to avoid it being typed as Set<unknown>.
+        const newIndices = new Set<number>();
         currentIndices.forEach(i => {
             if (i < rowIndex) newIndices.add(i);
             else if (i > rowIndex) newIndices.add(i - 1);
@@ -222,8 +224,7 @@ export default function App() {
     const handleDeleteSelectedRows = useCallback(() => {
         if (selectedRowIndices.size === 0) return;
 
-        // Fix: Explicitly type sort parameters to ensure correct type inference.
-        const indicesToDelete = Array.from(selectedRowIndices).sort((a: number, b: number) => b - a);
+        const indicesToDelete = Array.from(selectedRowIndices).sort((a, b) => b - a);
         
         setData(currentData => {
             const newData = [...currentData];
@@ -234,7 +235,8 @@ export default function App() {
         });
         
         // After deletion, all selections are invalid.
-        setSelectedRowIndices(new Set());
+        // FIX: Specify type for new Set to avoid it being typed as Set<unknown>.
+        setSelectedRowIndices(new Set<number>());
     }, [selectedRowIndices]);
 
   const handleRowSelectionChange = useCallback((rowIndex: number, isSelected: boolean) => {
@@ -253,7 +255,8 @@ export default function App() {
       if (selectAll) {
           setSelectedRowIndices(new Set(data.map((_, i) => i)));
       } else {
-          setSelectedRowIndices(new Set());
+          // FIX: Specify type for new Set to avoid it being typed as Set<unknown>.
+          setSelectedRowIndices(new Set<number>());
       }
   }, [data]);
 
