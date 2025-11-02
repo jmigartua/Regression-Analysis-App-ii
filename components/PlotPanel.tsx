@@ -17,6 +17,7 @@ interface PlotPanelProps {
   
   // Interactivity props
   chartStateRef: React.MutableRefObject<any>;
+  plotContainerRef: React.RefObject<HTMLDivElement>;
   activeTool: PlotTool | null;
   xAxisDomain: [any, any];
   setXAxisDomain: (domain: [any, any]) => void;
@@ -82,7 +83,7 @@ const ResidualLine = (props: any) => {
 
 export const PlotPanel: React.FC<PlotPanelProps> = ({ 
     data, residualsData, inactiveData, unselectedData, selectedData, independentVar, dependentVar, analysisResult,
-    chartStateRef, activeTool, xAxisDomain, setXAxisDomain, yAxisDomain, setYAxisDomain, selectedIndices, setSelectedIndices,
+    chartStateRef, plotContainerRef, activeTool, xAxisDomain, setXAxisDomain, yAxisDomain, setYAxisDomain, selectedIndices, setSelectedIndices,
     showGrid, showObservations, showLine, showResiduals,
     scatterColor, scatterOpacity, scatterSize,
     lineColor, lineOpacity, lineWidth, lineStyle,
@@ -164,7 +165,7 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({
     const scatterBaseSize = scatterSize * scatterSize / 20;
 
     return (
-        <div className="w-full h-full" style={{ cursor: activeTool === 'pan' ? 'move' : activeTool === 'select' ? 'crosshair' : 'default' }}>
+        <div ref={plotContainerRef} className="w-full h-full" style={{ cursor: activeTool === 'pan' ? 'move' : activeTool === 'select' ? 'crosshair' : 'default' }}>
             <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart 
                     margin={{ top: 5, right: 20, bottom: 20, left: 0 }}

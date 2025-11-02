@@ -15,6 +15,21 @@ export interface AnalysisResult {
   residualPlotData: DataPoint[];
 }
 
+export interface ExportConfig {
+  fileName: string;
+  format: 'png' | 'svg';
+  width: number;
+  height: number;
+  dpi: number;
+  title: string;
+  xAxisLabel: string;
+  yAxisLabel: string;
+  fontFamily: string;
+  fontSize: number;
+  theme: 'current' | 'grayscale' | 'publication';
+  showLegend: boolean;
+}
+
 export interface UIState {
   tablePanelWidth: number;
   plotExplorerWidth: number;
@@ -25,6 +40,10 @@ export interface UIState {
   activePlotTool: 'pan' | 'select' | null;
   xAxisDomain: [any, any];
   yAxisDomain: [any, any];
+
+  // Plot explorer state
+  activePlotExplorerTab: 'style' | 'export';
+  exportConfig: ExportConfig;
 }
 
 export interface FileState {

@@ -94,6 +94,21 @@ export default function App() {
           activePlotTool: null,
           xAxisDomain: ['dataMin', 'dataMax'],
           yAxisDomain: ['dataMin', 'dataMax'],
+          activePlotExplorerTab: 'style',
+          exportConfig: {
+            fileName: selectedFile.name.replace(/\.[^/.]+$/, "") + '_plot',
+            format: 'png',
+            width: 1200,
+            height: 800,
+            dpi: 150,
+            title: `${parsedColumns[1]} vs ${parsedColumns[0]}`,
+            xAxisLabel: parsedColumns[0],
+            yAxisLabel: parsedColumns[1],
+            fontFamily: 'sans-serif',
+            fontSize: 16,
+            theme: 'current',
+            showLegend: true,
+          }
         }
       };
 

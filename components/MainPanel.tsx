@@ -27,6 +27,7 @@ export const MainPanel: React.FC = () => {
     const rightPanelRef = useRef<HTMLDivElement>(null);
     const topPanelRef = useRef<HTMLDivElement>(null);
     const chartStateRef = useRef<any>(null);
+    const plotContainerRef = useRef<HTMLDivElement>(null);
     
     // All state, including UI state, now comes from context
     if (!fileState) return null;
@@ -226,6 +227,7 @@ export const MainPanel: React.FC = () => {
                                         dependentVar={dependentVar}
                                         
                                         chartStateRef={chartStateRef}
+                                        plotContainerRef={plotContainerRef}
                                         activeTool={activePlotTool}
                                         xAxisDomain={xAxisDomain} setXAxisDomain={(d) => updateUiState({ xAxisDomain: d })}
                                         yAxisDomain={yAxisDomain} setYAxisDomain={(d) => updateUiState({ yAxisDomain: d })}
@@ -257,6 +259,7 @@ export const MainPanel: React.FC = () => {
                             </div>
                             <div className="flex-shrink-0 h-full bg-sidebar dark:bg-dark-sidebar" style={{ width: `${plotExplorerWidth}px` }}>
                                 <PlotExplorerPanel
+                                    plotContainerRef={plotContainerRef}
                                     showGrid={showGrid} onToggleGrid={setShowGrid}
                                     showObservations={showObservations} onToggleObservations={setShowObservations}
                                     showLine={showLine} onToggleLine={setShowLine}
