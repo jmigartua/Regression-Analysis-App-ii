@@ -1,5 +1,5 @@
 
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { LayoutGrid, BarChart2 } from 'lucide-react';
 import { PlotPanel } from './PlotPanel';
 import { DataTable } from './DataTable';
@@ -62,56 +62,56 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     const [showGrid, setShowGrid] = useState(true);
     const [showLine, setShowLine] = useState(true);
 
-    const isResizing = useRef(false);
-    const isResizingHorizontal = useRef(false);
-
-    const handleMouseDown = (e: React.MouseEvent) => {
+    const handleMouseDownVertical = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
-        isResizing.current = true;
         document.body.style.cursor = 'col-resize';
-    };
-
-    const handleMouseDownHorizontal = (e: React.MouseEvent) => {
-        e.preventDefault();
-        isResizingHorizontal.current = true;
-        document.body.style.cursor = 'row-resize';
-    };
-
-    const handleMouseUp = useCallback(() => {
-        isResizing.current = false;
-        isResizingHorizontal.current = false;
-        document.body.style.cursor = 'default';
-    }, []);
-
-    const handleMouseMove = useCallback((e: MouseEvent) => {
-        if (isResizing.current && mainPanelRef.current) {
-            const parentRect = mainPanelRef.current.getBoundingClientRect();
-            const newWidth = e.clientX - parentRect.left;
-            if (newWidth > 300 && newWidth < parentRect.width - 400) {
-                setLeftPanelWidth(newWidth);
+        
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+            if (mainPanelRef.current) {
+                const parentRect = mainPanelRef.current.getBoundingClientRect();
+                const newWidth = moveEvent.clientX - parentRect.left;
+                if (newWidth > 300 && newWidth < parentRect.width - 300) {
+                    setLeftPanelWidth(newWidth);
+                }
             }
-        }
-        if (isResizingHorizontal.current && rightPanelRef.current) {
-            const parentRect = rightPanelRef.current.getBoundingClientRect();
-            const newHeight = e.clientY - parentRect.top;
-            const newHeightPercent = (newHeight / parentRect.height) * 100;
-            
-            if (newHeightPercent > 20 && newHeightPercent < 80) {
-                setTopPanelHeight(newHeightPercent);
-            }
-        }
-    }, []);
+        };
 
-    useEffect(() => {
-        if (isResizing.current || isResizingHorizontal.current) {
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-        }
-        return () => {
+        const handleMouseUp = () => {
+            document.body.style.cursor = 'default';
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
-        }
-    }, [handleMouseMove, handleMouseUp, isResizing.current, isResizingHorizontal.current]);
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    }, []);
+
+    const handleMouseDownHorizontal = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        document.body.style.cursor = 'row-resize';
+
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+            if (rightPanelRef.current) {
+                const parentRect = rightPanelRef.current.getBoundingClientRect();
+                const newHeight = moveEvent.clientY - parentRect.top;
+                const newHeightPercent = (newHeight / parentRect.height) * 100;
+                
+                if (newHeightPercent > 20 && newHeightPercent < 80) {
+                    setTopPanelHeight(newHeightPercent);
+                }
+            }
+        };
+
+        const handleMouseUp = () => {
+            document.body.style.cursor = 'default';
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    }, []);
+
 
     if (data.length === 0) {
         return <div className="flex-grow overflow-y-auto p-6"><WorkspacePlaceholder /></div>;
@@ -132,7 +132,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             </div>
             <div
                 className="w-1.5 flex-shrink-0 bg-border dark:bg-dark-border cursor-col-resize group flex items-center justify-center"
-                onMouseDown={handleMouseDown}
+                onMouseDown={handleMouseDownVertical}
             >
                 <div className="h-8 w-1 bg-gray-300 dark:bg-gray-600 rounded-full group-hover:bg-accent transition-colors"></div>
             </div>

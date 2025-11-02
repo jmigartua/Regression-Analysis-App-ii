@@ -35,8 +35,6 @@ export default function App() {
 
   const [leftPanelWidth, setLeftPanelWidth] = useState(256);
   
-  const isResizingLeft = useRef(false);
-
   const handleFileChange = useCallback(async (selectedFile: File | null) => {
     if (selectedFile) {
       if (selectedFile.type !== 'text/csv') {
@@ -198,28 +196,26 @@ export default function App() {
     setAnalysisResult(null);
   }, []);
 
+  const handleMouseDownLeft = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    document.body.style.cursor = 'col-resize';
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (isResizingLeft.current) {
-        setLeftPanelWidth(e.clientX - 48); // 48 is width of activity bar
-    }
-  }, []);
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const newWidth = moveEvent.clientX - 48; // 48 is width of activity bar
+      const constrainedWidth = Math.max(200, Math.min(newWidth, 500));
+      setLeftPanelWidth(constrainedWidth);
+    };
 
-  const handleMouseUp = useCallback(() => {
-    isResizingLeft.current = false;
-    document.body.style.cursor = 'default';
-  }, []);
-
-  useEffect(() => {
-    if (isResizingLeft.current) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-    return () => {
+    const handleMouseUp = () => {
+      document.body.style.cursor = 'default';
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
-    }
-  }, [handleMouseMove, handleMouseUp, isResizingLeft.current]);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, []);
+
 
   return (
     <div className="flex flex-col h-screen bg-bg-default dark:bg-dark-bg font-sans text-text-primary dark:text-gray-300 text-sm antialiased">
@@ -240,7 +236,7 @@ export default function App() {
         </div>
         <div 
             className="w-1.5 flex-shrink-0 bg-border dark:bg-dark-border cursor-col-resize group flex items-center justify-center"
-            onMouseDown={() => { isResizingLeft.current = true; document.body.style.cursor = 'col-resize'; }}
+            onMouseDown={handleMouseDownLeft}
         >
             <div className="h-8 w-1 bg-gray-300 dark:bg-gray-600 rounded-full group-hover:bg-accent transition-colors"></div>
         </div>
