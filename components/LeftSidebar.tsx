@@ -9,6 +9,7 @@ import type { FileState } from '../types';
 
 interface LeftSidebarProps {
   onFileAdd: (file: File) => void;
+  onAnalysisImport: (file: File) => void;
   files: Record<string, FileState>;
   activeFileId: string | null;
   setActiveFileId: (id: string) => void;
@@ -32,7 +33,7 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
   );
 };
 
-export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onFileAdd, files, activeFileId, setActiveFileId }) => {
+export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onFileAdd, onAnalysisImport, files, activeFileId, setActiveFileId }) => {
   const { t } = useAppContext();
   const { fileState, updateFileState } = useFileContext();
 
@@ -59,7 +60,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onFileAdd, files, acti
       </div>
       <div className="flex-grow overflow-y-auto py-2 space-y-2">
         <Section title={t('sidebar.data_source')}>
-          <FileUploader onFileAdd={onFileAdd} />
+          <FileUploader onFileAdd={onFileAdd} onAnalysisImport={onAnalysisImport} />
            <div className="pt-2">
             {Object.keys(files).length > 0 ? (
                 Object.values(files).map((f: FileState) => (

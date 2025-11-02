@@ -1,10 +1,11 @@
 
 import React, { useRef } from 'react';
-import { UploadCloud, PlusSquare } from 'lucide-react';
+import { UploadCloud, PlusSquare, FileJson } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
 
 interface FileUploaderProps {
   onFileAdd: (file: File) => void;
+  onAnalysisImport: (file: File) => void;
 }
 
 const ActionButton: React.FC<{ icon: React.ReactNode; text: string; onClick?: () => void; disabled?: boolean }> = ({ icon, text, onClick, disabled }) => (
@@ -19,12 +20,17 @@ const ActionButton: React.FC<{ icon: React.ReactNode; text: string; onClick?: ()
 );
 
 
-export const FileUploader: React.FC<FileUploaderProps> = ({ onFileAdd }) => {
+export const FileUploader: React.FC<FileUploaderProps> = ({ onFileAdd, onAnalysisImport }) => {
   const { t } = useAppContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+  
+  const handleImportClick = () => {
+    importInputRef.current?.click();
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,6 +38,15 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileAdd }) => {
       onFileAdd(e.target.files[0]);
     }
      // Reset the input value to allow re-uploading the same file
+    if(e.target) {
+      e.target.value = '';
+    }
+  };
+  
+  const handleImportSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      onAnalysisImport(e.target.files[0]);
+    }
     if(e.target) {
       e.target.value = '';
     }
@@ -45,6 +60,11 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileAdd }) => {
         onClick={handleUploadClick}
       />
       <ActionButton
+        icon={<FileJson className="w-4 h-4 mr-2 flex-shrink-0" />}
+        text={t('uploader.import_analysis')}
+        onClick={handleImportClick}
+      />
+      <ActionButton
         icon={<PlusSquare className="w-4 h-4 mr-2 flex-shrink-0" />}
         text={t('uploader.new_table')}
         disabled
@@ -55,6 +75,13 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileAdd }) => {
         className="hidden"
         accept=".csv"
         onChange={handleFileSelect}
+      />
+      <input
+        ref={importInputRef}
+        type="file"
+        className="hidden"
+        accept=".lra,.json"
+        onChange={handleImportSelect}
       />
     </div>
   );

@@ -102,6 +102,68 @@ export default function App() {
     }
   }, [t]);
 
+  const handleImportAnalysis = useCallback(async (analysisFile: File) => {
+    setError('');
+    try {
+      const jsonContent = await fileToText(analysisFile);
+      const parsedState = JSON.parse(jsonContent);
+
+      // Basic validation
+      if (!parsedState.fileName || !parsedState.data || !parsedState.columns) {
+        throw new Error('Invalid analysis file structure.');
+      }
+
+      const newFileId = Date.now().toString();
+      const newFileState: FileState = {
+        ...parsedState,
+        id: newFileId,
+        // Reconstruct non-serializable parts
+        file: new File([], parsedState.fileName, { type: 'text/plain' }), // Mock file object
+        selectedRowIndices: new Set(parsedState.selectedRowIndices),
+        uiState: {
+          ...parsedState.uiState,
+          selectedPlotIndices: new Set(parsedState.uiState.selectedPlotIndices),
+        },
+      };
+
+      setFiles(prev => ({ ...prev, [newFileId]: newFileState }));
+      setActiveFileId(newFileId);
+
+    } catch (e) {
+      setError(t('error.import_failed'));
+      console.error(e);
+    }
+  }, [t]);
+
+  const handleSaveAnalysis = useCallback(() => {
+    if (!activeFileState) return;
+
+    const { file, selectedRowIndices, uiState, ...rest } = activeFileState;
+    
+    const savableState = {
+      ...rest,
+      fileName: file.name,
+      selectedRowIndices: Array.from(selectedRowIndices),
+      uiState: {
+        ...uiState,
+        selectedPlotIndices: Array.from(uiState.selectedPlotIndices),
+      },
+    };
+
+    const jsonString = JSON.stringify(savableState, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${file.name.replace(/\.[^/.]+$/, "")}.lra`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+  }, [activeFileState]);
+
   const handleCloseFile = useCallback((fileIdToClose: string) => {
     setFiles(currentFiles => {
       const newFiles = { ...currentFiles };
@@ -277,10 +339,11 @@ export default function App() {
       <Header />
       <FileContextProvider value={contextValue}>
         <div className="flex flex-grow overflow-hidden">
-          <ActivityBar />
+          <ActivityBar onSave={handleSaveAnalysis} hasActiveFile={!!activeFileId} />
           <div style={{ width: `${leftPanelWidth}px` }} className="flex-shrink-0">
             <LeftSidebar 
               onFileAdd={handleAddNewFile} 
+              onAnalysisImport={handleImportAnalysis}
               files={files}
               activeFileId={activeFileId}
               setActiveFileId={setActiveFileId}
