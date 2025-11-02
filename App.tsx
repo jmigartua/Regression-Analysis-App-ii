@@ -65,8 +65,12 @@ export default function App() {
       const textContent = await fileToText(selectedFile);
       const { data: parsedData, columns: parsedColumns } = parseCSV(textContent);
       
-      if(parsedData.length === 0 || parsedColumns.length < 2) {
-          setError(t('error.empty_csv'));
+      if(parsedColumns.length < 2) {
+          setError(t('error.not_enough_columns'));
+          return;
+      }
+      if(parsedData.length === 0) {
+          setError(t('error.no_data_rows'));
           return;
       }
       

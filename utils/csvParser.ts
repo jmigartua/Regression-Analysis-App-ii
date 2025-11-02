@@ -12,7 +12,9 @@ export function fileToText(file: File): Promise<string> {
 
 export function parseCSV(csvText: string): { data: DataPoint[], columns: string[] } {
   const lines = csvText.trim().split(/\r?\n/);
-  if (lines.length < 2) return { data: [], columns: [] };
+  if (lines.length === 0 || (lines.length === 1 && lines[0].trim() === '')) {
+    return { data: [], columns: [] };
+  }
 
   const headers = lines[0].split(',').map(h => h.trim());
   const data: DataPoint[] = [];
