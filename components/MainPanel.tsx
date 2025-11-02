@@ -75,6 +75,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     const [scatterSize, setScatterSize] = useState(30);
     
     const [lineColor, setLineColor] = useState('#10b981');
+    const [lineOpacity, setLineOpacity] = useState(1);
     const [lineWidth, setLineWidth] = useState(2);
     const [lineStyle, setLineStyle] = useState('solid');
     
@@ -200,6 +201,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                                     scatterOpacity={scatterOpacity}
                                     scatterSize={scatterSize}
                                     lineColor={lineColor}
+                                    lineOpacity={lineOpacity}
                                     lineWidth={lineWidth}
                                     lineStyle={lineStyle}
                                     residualsColor={residualsColor}
@@ -224,6 +226,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                                     scatterOpacity={scatterOpacity} setScatterOpacity={setScatterOpacity}
                                     scatterSize={scatterSize} setScatterSize={setScatterSize}
                                     lineColor={lineColor} setLineColor={setLineColor}
+                                    lineOpacity={lineOpacity} setLineOpacity={setLineOpacity}
                                     lineWidth={lineWidth} setLineWidth={setLineWidth}
                                     lineStyle={lineStyle} setLineStyle={setLineStyle}
                                     residualsColor={residualsColor} setResidualsColor={setResidualsColor}

@@ -21,6 +21,7 @@ interface PlotPanelProps {
   scatterSize: number;
 
   lineColor: string;
+  lineOpacity: number;
   lineWidth: number;
   lineStyle: string;
 
@@ -100,6 +101,7 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({
     scatterOpacity,
     scatterSize,
     lineColor,
+    lineOpacity,
     lineWidth,
     lineStyle,
     residualsColor,
@@ -154,6 +156,7 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({
                         dataKey="y"
                         data={analysisResult.regressionLine}
                         stroke={lineColor}
+                        strokeOpacity={lineOpacity}
                         dot={false}
                         activeDot={false}
                         strokeWidth={lineWidth}

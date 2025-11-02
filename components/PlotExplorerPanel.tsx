@@ -22,6 +22,8 @@ interface PlotExplorerPanelProps {
 
   lineColor: string;
   setLineColor: (color: string) => void;
+  lineOpacity: number;
+  setLineOpacity: (opacity: number) => void;
   lineWidth: number;
   setLineWidth: (width: number) => void;
   lineStyle: string;
@@ -96,6 +98,9 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
                 <Toggle label={t('analysis.show_line')} checked={props.showLine} onChange={props.onToggleLine} />
                 <ControlWrapper label={t('plot_explorer.color')}>
                     <input type="color" value={props.lineColor} onChange={(e) => props.setLineColor(e.target.value)} className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-inherit" />
+                </ControlWrapper>
+                <ControlWrapper label={t('plot_explorer.opacity')}>
+                    <input type="range" min="0" max="1" step="0.1" value={props.lineOpacity} onChange={e => props.setLineOpacity(parseFloat(e.target.value))} className="w-24" />
                 </ControlWrapper>
                 <ControlWrapper label={t('plot_explorer.width')}>
                     <input type="range" min="1" max="10" step="0.5" value={props.lineWidth} onChange={e => props.setLineWidth(parseFloat(e.target.value))} className="w-24" />

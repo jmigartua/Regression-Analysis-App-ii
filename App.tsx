@@ -76,22 +76,24 @@ export default function App() {
     }
   }, [t]);
 
-  const handlePlot = useCallback(async () => {
-    if (!data.length || !independentVar || !dependentVar) {
-      setError(t('error.missing_data'));
+  useEffect(() => {
+    if (!isPlotted || data.length < 2 || !independentVar || !dependentVar) {
+      if (isPlotted) { // Only clear if we were previously plotting
+        setAnalysisResult(null);
+      }
       return;
     }
+
     if (independentVar === dependentVar) {
       setError(t('error.same_variables'));
+      setAnalysisResult(null);
       return;
     }
-    
-    setError('');
     
     try {
       const result = calculateLinearRegression(data, independentVar, dependentVar);
       setAnalysisResult(result);
-      setIsPlotted(true);
+      setError(''); // Clear previous errors
     } catch (e) {
       const errorCode = e instanceof Error ? e.message : 'UNKNOWN';
       let errorMessage = '';
@@ -110,9 +112,24 @@ export default function App() {
       setError(errorMessage);
       console.error(e);
       setAnalysisResult(null);
-      setIsPlotted(false);
     }
-  }, [data, independentVar, dependentVar, t]);
+  }, [data, independentVar, dependentVar, isPlotted, t]);
+
+
+  const handlePlot = useCallback(() => {
+    if (!data.length || !independentVar || !dependentVar) {
+      setError(t('error.missing_data'));
+      return;
+    }
+    if (independentVar === dependentVar) {
+      setError(t('error.same_variables'));
+      return;
+    }
+    
+    setError('');
+    setIsPlotted(true);
+    // The useEffect will now run the analysis
+  }, [data.length, independentVar, dependentVar, t]);
   
   const handleCellChange = useCallback((rowIndex: number, column: string, value: any) => {
     setData(currentData => {
@@ -121,8 +138,6 @@ export default function App() {
       newData[rowIndex] = newRow;
       return newData;
     });
-    setIsPlotted(false);
-    setAnalysisResult(null);
   }, []);
 
   const handleColumnRename = useCallback((oldName: string, newName: string) => {
@@ -146,8 +161,6 @@ export default function App() {
 
     if (independentVar === oldName) setIndependentVar(newName);
     if (dependentVar === oldName) setDependentVar(newName);
-    setIsPlotted(false);
-    setAnalysisResult(null);
 
   }, [columns, independentVar, dependentVar, t]);
 
@@ -156,8 +169,6 @@ export default function App() {
     if (newColumnName && !columns.includes(newColumnName)) {
       setColumns(currentCols => [...currentCols, newColumnName]);
       setData(currentData => currentData.map(row => ({ ...row, [newColumnName]: 0 })));
-      setIsPlotted(false);
-      setAnalysisResult(null);
     } else if (newColumnName) {
       setError(t('table.duplicate_column_error', { columnName: newColumnName }));
     }
@@ -173,8 +184,6 @@ export default function App() {
     
     if (independentVar === columnToDelete) setIndependentVar('');
     if (dependentVar === columnToDelete) setDependentVar('');
-    setIsPlotted(false);
-    setAnalysisResult(null);
   }, [independentVar, dependentVar]);
 
   const handleAddRow = useCallback(() => {
@@ -186,14 +195,10 @@ export default function App() {
       const newRow = Object.fromEntries(Object.keys(currentData[0]).map(key => [key, 0]));
       return [...currentData, newRow];
     });
-    setIsPlotted(false);
-    setAnalysisResult(null);
   }, [columns]);
   
   const handleDeleteRow = useCallback((rowIndex: number) => {
     setData(currentData => currentData.filter((_, i) => i !== rowIndex));
-    setIsPlotted(false);
-    setAnalysisResult(null);
   }, []);
 
   const handleMouseDownLeft = useCallback((e: React.MouseEvent) => {
