@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, useMemo } from 'react';
-import { BarChart2 } from 'lucide-react';
+import { BarChart2, ArrowRightLeft } from 'lucide-react';
 import { PlotPanel } from './PlotPanel';
 import { PlotlyPanel } from './PlotlyPanel';
 import { AnalysisPanel } from './AnalysisPanel';
@@ -26,9 +26,10 @@ interface PlottingWorkspaceProps {
     isReadOnly?: boolean;
     analysisSidebarPosition?: 'left' | 'right';
     forceRenderer?: 'recharts' | 'plotly';
+    showSwapAxesButton?: boolean;
 }
 
-export const PlottingWorkspace: React.FC<PlottingWorkspaceProps> = ({ fileState, updateFileState, explorerPosition, isReadOnly = false, analysisSidebarPosition = 'left', forceRenderer }) => {
+export const PlottingWorkspace: React.FC<PlottingWorkspaceProps> = ({ fileState, updateFileState, explorerPosition, isReadOnly = false, analysisSidebarPosition = 'left', forceRenderer, showSwapAxesButton = false }) => {
     const { t } = useAppContext();
     
     const topPanelRef = useRef<HTMLDivElement>(null);
@@ -65,6 +66,30 @@ export const PlottingWorkspace: React.FC<PlottingWorkspaceProps> = ({ fileState,
         if (isReadOnly) return;
         updateFileState({ uiState: { ...uiState, ...updates }});
     }
+
+    const handleSwapAxes = useCallback(() => {
+        if (isReadOnly) return;
+        const newIndependentVar = dependentVar;
+        const newDependentVar = independentVar;
+        
+        updateFileState({
+            independentVar: newIndependentVar,
+            dependentVar: newDependentVar,
+            uiState: {
+                ...uiState,
+                xAxisDomain: getPaddedDomain(data, newIndependentVar),
+                yAxisDomain: getPaddedDomain(data, newDependentVar),
+                xAxisLabel: newIndependentVar,
+                yAxisLabel: newDependentVar,
+                exportConfig: {
+                    ...uiState.exportConfig,
+                    xAxisLabel: newIndependentVar,
+                    yAxisLabel: newDependentVar,
+                    title: `${newDependentVar} vs ${newIndependentVar}`,
+                }
+            }
+        });
+    }, [isReadOnly, dependentVar, independentVar, updateFileState, uiState, data]);
 
     const handleZoom = (factor: number) => {
         const [xMin, xMax] = xAxisDomain;
@@ -204,17 +229,33 @@ export const PlottingWorkspace: React.FC<PlottingWorkspaceProps> = ({ fileState,
 
                         <div className="flex-grow flex flex-col" style={{ width: `calc(100% - ${plotExplorerWidth}px - 6px)` }}>
                                 <div className="flex-shrink-0 border-b border-border dark:border-dark-border flex items-center justify-between">
-                                {currentRenderer === 'recharts' ? (
-                                    <PlotToolbar 
-                                        activeTool={activePlotTool}
-                                        setActiveTool={(tool) => updateUiState({ activePlotTool: tool })}
-                                        onZoomIn={() => handleZoom(0.8)}
-                                        onZoomOut={() => handleZoom(1.2)}
-                                        onReset={handleResetView}
-                                        onClearSelection={handleClearSelection}
-                                        hasSelection={selectedPlotIndices.size > 0}
-                                    />
-                                ) : <div />}
+                                <div className="flex items-center space-x-1 p-1">
+                                    {currentRenderer === 'recharts' && (
+                                        <PlotToolbar 
+                                            activeTool={activePlotTool}
+                                            setActiveTool={(tool) => updateUiState({ activePlotTool: tool })}
+                                            onZoomIn={() => handleZoom(0.8)}
+                                            onZoomOut={() => handleZoom(1.2)}
+                                            onReset={handleResetView}
+                                            onClearSelection={handleClearSelection}
+                                            hasSelection={selectedPlotIndices.size > 0}
+                                        />
+                                    )}
+                                    {showSwapAxesButton && (
+                                         <div className="relative group">
+                                            <button
+                                                onClick={handleSwapAxes}
+                                                aria-label={t('plot_toolbar.swap_axes')}
+                                                className={`p-1.5 rounded-md transition-colors text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10`}
+                                            >
+                                                <ArrowRightLeft className="w-5 h-5" />
+                                            </button>
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-dark-sidebar text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-20">
+                                                {t('plot_toolbar.swap_axes')}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                     <div className="flex items-center text-xs px-2">
                                     <button 
                                         onClick={() => !forceRenderer && updateUiState({ activePlotRenderer: 'recharts' })} 

@@ -1,4 +1,3 @@
-
 {
   "header.title": "LRA-IDE",
   "header.file": "Fitxategia",
@@ -104,6 +103,7 @@
   "plot_exporter.theme_grayscale": "Gris-eskala",
   "plot_exporter.theme_publication": "Argitalpena",
   "plot_exporter.export_button": "Esportatu",
+  "plot_toolbar.swap_axes": "Ardatzak Trukatu",
   "right_sidebar.equation": "Erregresio Ekuazioa",
   "results.summary": "Laburpen Estatistikak",
   "results.rsquared": "R-Karratua",

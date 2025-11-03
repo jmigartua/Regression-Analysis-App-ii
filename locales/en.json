@@ -1,4 +1,3 @@
-
 {
   "header.title": "LRA-IDE",
   "header.file": "File",
@@ -111,6 +110,7 @@
   "plot_toolbar.reset_view": "Reset View",
   "plot_toolbar.clear_selection": "Clear Selection",
   "plot_toolbar.export_plot": "Export Plot as SVG",
+  "plot_toolbar.swap_axes": "Swap Axes",
   "right_sidebar.equation": "Regression Equation",
   "results.summary": "Summary Statistics",
   "results.rsquared": "R-Squared",

@@ -1,4 +1,3 @@
-
 {
   "header.title": "IDE-ALR",
   "header.file": "Archivo",
@@ -111,6 +110,7 @@
   "plot_toolbar.reset_view": "Restablecer Vista",
   "plot_toolbar.clear_selection": "Limpiar Selección",
   "plot_toolbar.export_plot": "Exportar Gráfico como SVG",
+  "plot_toolbar.swap_axes": "Intercambiar Ejes",
   "right_sidebar.equation": "Ecuación de Regresión",
   "results.summary": "Estadísticas de Resumen",
   "results.rsquared": "R-Cuadrado",

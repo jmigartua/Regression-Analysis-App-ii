@@ -75,6 +75,7 @@ export const SimulationPanel: React.FC = () => {
                     explorerPosition="right"
                     analysisSidebarPosition="right"
                     forceRenderer="plotly"
+                    showSwapAxesButton={true}
                 />
             </div>
         </div>
