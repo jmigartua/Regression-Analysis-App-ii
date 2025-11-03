@@ -98,6 +98,7 @@ export default function App() {
           yAxisDecimals: 2,
           xAxisLabel: parsedColumns[0],
           yAxisLabel: parsedColumns[1],
+          activePlotRenderer: 'recharts',
           activePlotExplorerTab: 'series',
           exportConfig: {
             fileName: selectedFile.name.replace(/\.[^/.]+$/, "") + '_plot',

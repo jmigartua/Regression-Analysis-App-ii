@@ -28,6 +28,8 @@
   "main.no_data": "Ez dago daturik erakusteko.",
   "main.plot_placeholder_title": "Marrazteko Prest",
   "main.plot_placeholder_description": "Hautatu zure aldagaiak eta egin klik 'Datuak Marraztu' botoian esploratzailean zure datuak ikusteko.",
+  "main.plot_tab_recharts": "Recharts",
+  "main.plot_tab_plotly": "Plotly",
   "tabs.analysis_fitting": "Analisia eta Doikuntza",
   "tabs.simulation": "Simulazioa",
   "tabs.close_tab_tooltip": "Itxi Fitxa",

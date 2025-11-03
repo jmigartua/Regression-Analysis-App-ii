@@ -46,6 +46,9 @@ export interface UIState {
   xAxisLabel: string;
   yAxisLabel: string;
 
+  // Plot renderer state
+  activePlotRenderer: 'recharts' | 'plotly';
+
   // Plot explorer state
   activePlotExplorerTab: 'series' | 'plot' | 'export' | 'code';
   exportConfig: ExportConfig;

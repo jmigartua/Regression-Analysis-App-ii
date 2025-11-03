@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronDown, Copy } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
@@ -256,237 +255,257 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
     }
   }
 
-  return (
-    <div className="h-full w-full flex flex-col">
-        <div className="p-2 border-b border-border dark:border-dark-border flex-shrink-0">
-            <span className="text-xs font-semibold uppercase text-text-secondary dark:text-gray-400 px-2">{t('plot_explorer.title')}</span>
-        </div>
-        <div className="flex-shrink-0 border-b border-border dark:border-dark-border px-2">
-            <button
-                onClick={() => setActiveTab('series')}
-                className={`px-3 py-2 text-sm font-medium focus:outline-none -mb-px ${activePlotExplorerTab === 'series' ? 'border-b-2 border-accent text-accent' : 'text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-t-md'}`}
-            >
-                {t('plot_explorer.tab_series')}
-            </button>
-            <button
-                onClick={() => setActiveTab('plot')}
-                className={`px-3 py-2 text-sm font-medium focus:outline-none -mb-px ${activePlotExplorerTab === 'plot' ? 'border-b-2 border-accent text-accent' : 'text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-t-md'}`}
-            >
-                {t('plot_explorer.tab_plot')}
-            </button>
-            <button
-                onClick={() => setActiveTab('export')}
-                className={`px-3 py-2 text-sm font-medium focus:outline-none -mb-px ${activePlotExplorerTab === 'export' ? 'border-b-2 border-accent text-accent' : 'text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-t-md'}`}
-            >
-                {t('plot_explorer.tab_export')}
-            </button>
-            <button
-                onClick={() => setActiveTab('code')}
-                className={`px-3 py-2 text-sm font-medium focus:outline-none -mb-px ${activePlotExplorerTab === 'code' ? 'border-b-2 border-accent text-accent' : 'text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-t-md'}`}
-            >
-                {t('plot_explorer.tab_code')}
-            </button>
-        </div>
-        <div className="flex-grow overflow-y-auto">
-            {activePlotExplorerTab === 'series' && (
-              <>
-                <Section title={t('plot_explorer.scatter')} defaultOpen>
-                    <Toggle label={t('analysis.show_observations')} checked={props.showObservations} onChange={props.onToggleObservations} />
-                    <ControlWrapper label={t('plot_explorer.color')}>
-                        <input type="color" value={props.scatterColor} onChange={(e) => props.setScatterColor(e.target.value)} className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-inherit" />
-                    </ControlWrapper>
-                    <ControlWrapper label={t('plot_explorer.opacity')}>
-                        <input type="range" min="0" max="1" step="0.1" value={props.scatterOpacity} onChange={e => props.setScatterOpacity(parseFloat(e.target.value))} className="w-24" />
-                    </ControlWrapper>
-                    <ControlWrapper label={t('plot_explorer.size')}>
-                        <input type="range" min="1" max="100" step="1" value={props.scatterSize} onChange={e => props.setScatterSize(parseInt(e.target.value))} className="w-24" />
-                    </ControlWrapper>
-                </Section>
-                <Section title={t('plot_explorer.regression_line')}>
-                    <Toggle label={t('analysis.show_line')} checked={props.showLine} onChange={props.onToggleLine} />
-                    <ControlWrapper label={t('plot_explorer.color')}>
-                        <input type="color" value={props.lineColor} onChange={(e) => props.setLineColor(e.target.value)} className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-inherit" />
-                    </ControlWrapper>
-                    <ControlWrapper label={t('plot_explorer.opacity')}>
-                        <input type="range" min="0" max="1" step="0.1" value={props.lineOpacity} onChange={e => props.setLineOpacity(parseFloat(e.target.value))} className="w-24" />
-                    </ControlWrapper>
-                    <ControlWrapper label={t('plot_explorer.width')}>
-                        <input type="range" min="1" max="10" step="0.5" value={props.lineWidth} onChange={e => props.setLineWidth(parseFloat(e.target.value))} className="w-24" />
-                    </ControlWrapper>
-                    <ControlWrapper label={t('plot_explorer.style')}>
-                        <select value={props.lineStyle} onChange={(e) => props.setLineStyle(e.target.value)} className="bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 rounded-md p-1 text-sm">
-                            <option value="solid">{t('plot_explorer.style_solid')}</option>
-                            <option value="dashed">{t('plot_explorer.style_dashed')}</option>
-                            <option value="dotted">{t('plot_explorer.style_dotted')}</option>
-                        </select>
-                    </ControlWrapper>
-                </Section>
-                <Section title={t('plot_explorer.residuals')}>
-                    <Toggle label={t('analysis.show_residuals')} checked={props.showResiduals} onChange={props.onToggleResiduals} />
-                    <ControlWrapper label={t('plot_explorer.color')}>
-                        <input type="color" value={props.residualsColor} onChange={(e) => props.setResidualsColor(e.target.value)} className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-inherit" />
-                    </ControlWrapper>
-                    <ControlWrapper label={t('plot_explorer.opacity')}>
-                        <input type="range" min="0" max="1" step="0.1" value={props.residualsOpacity} onChange={e => props.setResidualsOpacity(parseFloat(e.target.value))} className="w-24" />
-                    </ControlWrapper>
-                    <ControlWrapper label={t('plot_explorer.width')}>
-                        <input type="range" min="1" max="10" step="0.5" value={props.residualsWidth} onChange={e => props.setResidualsWidth(parseFloat(e.target.value))} className="w-24" />
-                    </ControlWrapper>
-                    <ControlWrapper label={t('plot_explorer.style')}>
-                        <select value={props.residualsStyle} onChange={(e) => props.setResidualsStyle(e.target.value)} className="bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 rounded-md p-1 text-sm">
-                            <option value="solid">{t('plot_explorer.style_solid')}</option>
-                            <option value="dashed">{t('plot_explorer.style_dashed')}</option>
-                            <option value="dotted">{t('plot_explorer.style_dotted')}</option>
-                        </select>
-                    </ControlWrapper>
-                </Section>
-              </>
-            )}
-            {activePlotExplorerTab === 'plot' && (
-                <>
-                    <Section title={t('plot_explorer.general')} defaultOpen>
-                        <Toggle label={t('analysis.show_grid')} checked={props.showGrid} onChange={props.onToggleGrid} />
-                        <Toggle label={t('plot_explorer.show_legend')} checked={exportConfig.showLegend} onChange={c => updateExportConfig({ showLegend: c })} />
-                        <Toggle label={t('plot_explorer.show_title')} checked={exportConfig.showTitle} onChange={c => updateExportConfig({ showTitle: c })} />
-                    </Section>
-                    <Section title={t('plot_explorer.axes_domain')} defaultOpen>
-                        <div className="grid grid-cols-2 gap-2">
-                            <LabeledInput label={t('plot_explorer.x_min')}>
-                                <input type="text" value={localXDomain[0]} onChange={e => handleDomainChange('x', 'min', e.target.value)} onBlur={handleDomainBlur} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                            </LabeledInput>
-                            <LabeledInput label={t('plot_explorer.x_max')}>
-                                <input type="text" value={localXDomain[1]} onChange={e => handleDomainChange('x', 'max', e.target.value)} onBlur={handleDomainBlur} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                            </LabeledInput>
-                            <LabeledInput label={t('plot_explorer.y_min')}>
-                                <input type="text" value={localYDomain[0]} onChange={e => handleDomainChange('y', 'min', e.target.value)} onBlur={handleDomainBlur} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                            </LabeledInput>
-                             <LabeledInput label={t('plot_explorer.y_max')}>
-                                <input type="text" value={localYDomain[1]} onChange={e => handleDomainChange('y', 'max', e.target.value)} onBlur={handleDomainBlur} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                            </LabeledInput>
-                        </div>
-                    </Section>
-                    <Section title={t('plot_explorer.axes_labels')}>
-                        <LabeledInput label={t('plot_explorer.x_axis_label')}>
-                           <input type="text" value={xAxisLabel} onChange={e => updateUiState({ xAxisLabel: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                        </LabeledInput>
-                         <LabeledInput label={t('plot_explorer.y_axis_label')}>
-                           <input type="text" value={yAxisLabel} onChange={e => updateUiState({ yAxisLabel: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                        </LabeledInput>
-                    </Section>
-                    <Section title={t('plot_explorer.tick_formatting')}>
-                        <div className="space-y-3">
-                            <div className="flex items-center space-x-2">
-                              <label htmlFor="x-decimals-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('plot_explorer.x_decimals')}:</label>
-                              <input
-                                  id="x-decimals-slider"
-                                  type="range"
-                                  min="0"
-                                  max="8"
-                                  value={xAxisDecimals}
-                                  onChange={(e) => updateUiState({ xAxisDecimals: Number(e.target.value) })}
-                                  className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                              />
-                              <span className="text-sm font-mono w-4 text-right">{xAxisDecimals}</span>
-                            </div>
-                             <div className="flex items-center space-x-2">
-                              <label htmlFor="y-decimals-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('plot_explorer.y_decimals')}:</label>
-                              <input
-                                  id="y-decimals-slider"
-                                  type="range"
-                                  min="0"
-                                  max="8"
-                                  value={yAxisDecimals}
-                                  onChange={(e) => updateUiState({ yAxisDecimals: Number(e.target.value) })}
-                                  className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                              />
-                              <span className="text-sm font-mono w-4 text-right">{yAxisDecimals}</span>
-                            </div>
-                        </div>
-                    </Section>
-                </>
-            )}
-            {activePlotExplorerTab === 'export' && (
-                <div className="p-2 space-y-4">
-                  <Section title={t('plot_exporter.title')} defaultOpen>
-                    <LabeledInput label={t('plot_exporter.filename')}>
-                      <input type="text" value={exportConfig.fileName} onChange={e => updateExportConfig({ fileName: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                    </LabeledInput>
-                    <LabeledInput label={t('plot_exporter.format')}>
-                      <select value={exportConfig.format} onChange={e => updateExportConfig({ format: e.target.value as 'png' | 'svg' })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 rounded-md p-1 text-sm">
-                          <option value="png">PNG</option>
-                          <option value="svg">SVG</option>
-                      </select>
-                    </LabeledInput>
-                  </Section>
-
-                  <Section title={t('plot_exporter.dimensions')} defaultOpen>
-                    <div className="grid grid-cols-2 gap-2">
-                      <LabeledInput label={t('plot_exporter.width')}>
-                        <input type="number" value={exportConfig.width} onChange={e => updateExportConfig({ width: parseInt(e.target.value) })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                      </LabeledInput>
-                      <LabeledInput label={t('plot_exporter.height')}>
-                        <input type="number" value={exportConfig.height} onChange={e => updateExportConfig({ height: parseInt(e.target.value) })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                      </LabeledInput>
-                    </div>
-                     {exportConfig.format === 'png' && (
-                        <LabeledInput label={t('plot_exporter.dpi')}>
-                          <input type="number" step="50" value={exportConfig.dpi} onChange={e => updateExportConfig({ dpi: parseInt(e.target.value) })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                        </LabeledInput>
-                     )}
-                  </Section>
-                  <Section title={t('plot_exporter.labels')}>
-                     <LabeledInput label={t('plot_exporter.plot_title')}>
-                      <input type="text" value={exportConfig.title} onChange={e => updateExportConfig({ title: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                    </LabeledInput>
-                     <LabeledInput label={t('plot_exporter.x_axis_label')}>
-                      <input type="text" value={exportConfig.xAxisLabel} onChange={e => updateExportConfig({ xAxisLabel: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                    </LabeledInput>
-                     <LabeledInput label={t('plot_exporter.y_axis_label')}>
-                      <input type="text" value={exportConfig.yAxisLabel} onChange={e => updateExportConfig({ yAxisLabel: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                    </LabeledInput>
-                  </Section>
-                   <Section title={t('plot_exporter.typography')}>
-                     <LabeledInput label={t('plot_exporter.font_family')}>
-                      <select value={exportConfig.fontFamily} onChange={e => updateExportConfig({ fontFamily: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 rounded-md p-1 text-sm">
-                          <option value="sans-serif">Sans-Serif</option>
-                          <option value="serif">Serif</option>
-                          <option value="monospace">Monospace</option>
-                      </select>
-                    </LabeledInput>
-                     <LabeledInput label={t('plot_exporter.font_size')}>
-                        <input type="number" value={exportConfig.fontSize} onChange={e => updateExportConfig({ fontSize: parseInt(e.target.value) })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
-                      </LabeledInput>
-                  </Section>
-                  <div className="p-2">
-                    <button
-                      onClick={handleExport}
-                      className="w-full flex items-center justify-center bg-accent hover:bg-blue-500 disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm transition-colors duration-200"
-                    >
-                      {t('plot_exporter.export_button')}
-                    </button>
-                  </div>
-                </div>
-            )}
-            {activePlotExplorerTab === 'code' && (
-              <div className="p-3 h-full flex flex-col">
-                <div className="flex-grow relative">
-                  <textarea
-                    value={editableCode}
-                    onChange={(e) => setEditableCode(e.target.value)}
-                    className="w-full h-full p-2 font-mono text-xs bg-bg-default dark:bg-dark-bg border border-border dark:border-dark-border rounded-md resize-none"
-                    aria-label="Generated Python Plot Code"
+  const renderTabContent = () => {
+    switch (activePlotExplorerTab) {
+      case 'code':
+        return (
+          <div className="p-3 flex-1 flex flex-col min-h-0">
+            <div className="flex-1 relative min-h-0">
+              <textarea
+                value={editableCode}
+                onChange={(e) => setEditableCode(e.target.value)}
+                className="w-full h-full p-2 font-mono text-xs bg-bg-default dark:bg-dark-bg border border-border dark:border-dark-border rounded-md resize-none"
+                aria-label="Generated Python Plot Code"
+              />
+              <button
+                onClick={handleCopyCode}
+                className="absolute top-2 right-2 flex items-center px-2 py-1 bg-sidebar dark:bg-dark-sidebar border border-border dark:border-dark-border rounded-md text-xs hover:bg-black/5 dark:hover:bg-white/10"
+              >
+                <Copy className="w-3.5 h-3.5 mr-1.5" />
+                {copyButtonText}
+              </button>
+            </div>
+          </div>
+        );
+      case 'series':
+        return (
+          <>
+            <Section title={t('plot_explorer.scatter')} defaultOpen>
+              <Toggle label={t('analysis.show_observations')} checked={props.showObservations} onChange={props.onToggleObservations} />
+              <ControlWrapper label={t('plot_explorer.color')}>
+                <input type="color" value={props.scatterColor} onChange={(e) => props.setScatterColor(e.target.value)} className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-inherit" />
+              </ControlWrapper>
+              <ControlWrapper label={t('plot_explorer.opacity')}>
+                <input type="range" min="0" max="1" step="0.1" value={props.scatterOpacity} onChange={e => props.setScatterOpacity(parseFloat(e.target.value))} className="w-24" />
+              </ControlWrapper>
+              <ControlWrapper label={t('plot_explorer.size')}>
+                <input type="range" min="1" max="100" step="1" value={props.scatterSize} onChange={e => props.setScatterSize(parseInt(e.target.value))} className="w-24" />
+              </ControlWrapper>
+            </Section>
+            <Section title={t('plot_explorer.regression_line')}>
+              <Toggle label={t('analysis.show_line')} checked={props.showLine} onChange={props.onToggleLine} />
+              <ControlWrapper label={t('plot_explorer.color')}>
+                <input type="color" value={props.lineColor} onChange={(e) => props.setLineColor(e.target.value)} className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-inherit" />
+              </ControlWrapper>
+              <ControlWrapper label={t('plot_explorer.opacity')}>
+                <input type="range" min="0" max="1" step="0.1" value={props.lineOpacity} onChange={e => props.setLineOpacity(parseFloat(e.target.value))} className="w-24" />
+              </ControlWrapper>
+              <ControlWrapper label={t('plot_explorer.width')}>
+                <input type="range" min="1" max="10" step="0.5" value={props.lineWidth} onChange={e => props.setLineWidth(parseFloat(e.target.value))} className="w-24" />
+              </ControlWrapper>
+              <ControlWrapper label={t('plot_explorer.style')}>
+                <select value={props.lineStyle} onChange={(e) => props.setLineStyle(e.target.value)} className="bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 rounded-md p-1 text-sm">
+                  <option value="solid">{t('plot_explorer.style_solid')}</option>
+                  <option value="dashed">{t('plot_explorer.style_dashed')}</option>
+                  <option value="dotted">{t('plot_explorer.style_dotted')}</option>
+                </select>
+              </ControlWrapper>
+            </Section>
+            <Section title={t('plot_explorer.residuals')}>
+              <Toggle label={t('analysis.show_residuals')} checked={props.showResiduals} onChange={props.onToggleResiduals} />
+              <ControlWrapper label={t('plot_explorer.color')}>
+                <input type="color" value={props.residualsColor} onChange={(e) => props.setResidualsColor(e.target.value)} className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-inherit" />
+              </ControlWrapper>
+              <ControlWrapper label={t('plot_explorer.opacity')}>
+                <input type="range" min="0" max="1" step="0.1" value={props.residualsOpacity} onChange={e => props.setResidualsOpacity(parseFloat(e.target.value))} className="w-24" />
+              </ControlWrapper>
+              <ControlWrapper label={t('plot_explorer.width')}>
+                <input type="range" min="1" max="10" step="0.5" value={props.residualsWidth} onChange={e => props.setResidualsWidth(parseFloat(e.target.value))} className="w-24" />
+              </ControlWrapper>
+              <ControlWrapper label={t('plot_explorer.style')}>
+                <select value={props.residualsStyle} onChange={(e) => props.setResidualsStyle(e.target.value)} className="bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 rounded-md p-1 text-sm">
+                  <option value="solid">{t('plot_explorer.style_solid')}</option>
+                  <option value="dashed">{t('plot_explorer.style_dashed')}</option>
+                  <option value="dotted">{t('plot_explorer.style_dotted')}</option>
+                </select>
+              </ControlWrapper>
+            </Section>
+          </>
+        );
+      case 'plot':
+        return (
+          <>
+            <Section title={t('plot_explorer.general')} defaultOpen>
+              <Toggle label={t('analysis.show_grid')} checked={props.showGrid} onChange={props.onToggleGrid} />
+              <Toggle label={t('plot_explorer.show_legend')} checked={exportConfig.showLegend} onChange={c => updateExportConfig({ showLegend: c })} />
+              <Toggle label={t('plot_explorer.show_title')} checked={exportConfig.showTitle} onChange={c => updateExportConfig({ showTitle: c })} />
+            </Section>
+            <Section title={t('plot_explorer.axes_domain')} defaultOpen>
+              <div className="grid grid-cols-2 gap-2">
+                <LabeledInput label={t('plot_explorer.x_min')}>
+                  <input type="text" value={localXDomain[0]} onChange={e => handleDomainChange('x', 'min', e.target.value)} onBlur={handleDomainBlur} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+                </LabeledInput>
+                <LabeledInput label={t('plot_explorer.x_max')}>
+                  <input type="text" value={localXDomain[1]} onChange={e => handleDomainChange('x', 'max', e.target.value)} onBlur={handleDomainBlur} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+                </LabeledInput>
+                <LabeledInput label={t('plot_explorer.y_min')}>
+                  <input type="text" value={localYDomain[0]} onChange={e => handleDomainChange('y', 'min', e.target.value)} onBlur={handleDomainBlur} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+                </LabeledInput>
+                <LabeledInput label={t('plot_explorer.y_max')}>
+                  <input type="text" value={localYDomain[1]} onChange={e => handleDomainChange('y', 'max', e.target.value)} onBlur={handleDomainBlur} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+                </LabeledInput>
+              </div>
+            </Section>
+            <Section title={t('plot_explorer.axes_labels')}>
+              <LabeledInput label={t('plot_explorer.x_axis_label')}>
+                <input type="text" value={xAxisLabel} onChange={e => updateUiState({ xAxisLabel: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+              </LabeledInput>
+              <LabeledInput label={t('plot_explorer.y_axis_label')}>
+                <input type="text" value={yAxisLabel} onChange={e => updateUiState({ yAxisLabel: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+              </LabeledInput>
+            </Section>
+            <Section title={t('plot_explorer.tick_formatting')}>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <label htmlFor="x-decimals-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('plot_explorer.x_decimals')}:</label>
+                  <input
+                    id="x-decimals-slider"
+                    type="range"
+                    min="0"
+                    max="8"
+                    value={xAxisDecimals}
+                    onChange={(e) => updateUiState({ xAxisDecimals: Number(e.target.value) })}
+                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
                   />
-                  <button 
-                    onClick={handleCopyCode}
-                    className="absolute top-2 right-2 flex items-center px-2 py-1 bg-sidebar dark:bg-dark-sidebar border border-border dark:border-dark-border rounded-md text-xs hover:bg-black/5 dark:hover:bg-white/10"
-                  >
-                    <Copy className="w-3.5 h-3.5 mr-1.5" />
-                    {copyButtonText}
-                  </button>
+                  <span className="text-sm font-mono w-4 text-right">{xAxisDecimals}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <label htmlFor="y-decimals-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('plot_explorer.y_decimals')}:</label>
+                  <input
+                    id="y-decimals-slider"
+                    type="range"
+                    min="0"
+                    max="8"
+                    value={yAxisDecimals}
+                    onChange={(e) => updateUiState({ yAxisDecimals: Number(e.target.value) })}
+                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <span className="text-sm font-mono w-4 text-right">{yAxisDecimals}</span>
                 </div>
               </div>
-            )}
-        </div>
+            </Section>
+          </>
+        );
+      case 'export':
+        return (
+          <div className="p-2 space-y-4">
+            <Section title={t('plot_exporter.title')} defaultOpen>
+              <LabeledInput label={t('plot_exporter.filename')}>
+                <input type="text" value={exportConfig.fileName} onChange={e => updateExportConfig({ fileName: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+              </LabeledInput>
+              <LabeledInput label={t('plot_exporter.format')}>
+                <select value={exportConfig.format} onChange={e => updateExportConfig({ format: e.target.value as 'png' | 'svg' })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 rounded-md p-1 text-sm">
+                  <option value="png">PNG</option>
+                  <option value="svg">SVG</option>
+                </select>
+              </LabeledInput>
+            </Section>
+
+            <Section title={t('plot_exporter.dimensions')} defaultOpen>
+              <div className="grid grid-cols-2 gap-2">
+                <LabeledInput label={t('plot_exporter.width')}>
+                  <input type="number" value={exportConfig.width} onChange={e => updateExportConfig({ width: parseInt(e.target.value) })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+                </LabeledInput>
+                <LabeledInput label={t('plot_exporter.height')}>
+                  <input type="number" value={exportConfig.height} onChange={e => updateExportConfig({ height: parseInt(e.target.value) })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+                </LabeledInput>
+              </div>
+              {exportConfig.format === 'png' && (
+                <LabeledInput label={t('plot_exporter.dpi')}>
+                  <input type="number" step="50" value={exportConfig.dpi} onChange={e => updateExportConfig({ dpi: parseInt(e.target.value) })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+                </LabeledInput>
+              )}
+            </Section>
+            <Section title={t('plot_exporter.labels')}>
+              <LabeledInput label={t('plot_exporter.plot_title')}>
+                <input type="text" value={exportConfig.title} onChange={e => updateExportConfig({ title: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+              </LabeledInput>
+              <LabeledInput label={t('plot_exporter.x_axis_label')}>
+                <input type="text" value={exportConfig.xAxisLabel} onChange={e => updateExportConfig({ xAxisLabel: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+              </LabeledInput>
+              <LabeledInput label={t('plot_exporter.y_axis_label')}>
+                <input type="text" value={exportConfig.yAxisLabel} onChange={e => updateExportConfig({ yAxisLabel: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+              </LabeledInput>
+            </Section>
+            <Section title={t('plot_exporter.typography')}>
+              <LabeledInput label={t('plot_exporter.font_family')}>
+                <select value={exportConfig.fontFamily} onChange={e => updateExportConfig({ fontFamily: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 rounded-md p-1 text-sm">
+                  <option value="sans-serif">Sans-Serif</option>
+                  <option value="serif">Serif</option>
+                  <option value="monospace">Monospace</option>
+                </select>
+              </LabeledInput>
+              <LabeledInput label={t('plot_exporter.font_size')}>
+                <input type="number" value={exportConfig.fontSize} onChange={e => updateExportConfig({ fontSize: parseInt(e.target.value) })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+              </LabeledInput>
+            </Section>
+            <div className="p-2">
+              <button
+                onClick={handleExport}
+                className="w-full flex items-center justify-center bg-accent hover:bg-blue-500 disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm transition-colors duration-200"
+              >
+                {t('plot_exporter.export_button')}
+              </button>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="h-full w-full flex flex-col">
+      <div className="p-2 border-b border-border dark:border-dark-border flex-shrink-0">
+        <span className="text-xs font-semibold uppercase text-text-secondary dark:text-gray-400 px-2">{t('plot_explorer.title')}</span>
+      </div>
+      <div className="flex-shrink-0 border-b border-border dark:border-dark-border px-2">
+        <button
+          onClick={() => setActiveTab('series')}
+          className={`px-3 py-2 text-sm font-medium focus:outline-none -mb-px ${activePlotExplorerTab === 'series' ? 'border-b-2 border-accent text-accent' : 'text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-t-md'}`}
+        >
+          {t('plot_explorer.tab_series')}
+        </button>
+        <button
+          onClick={() => setActiveTab('plot')}
+          className={`px-3 py-2 text-sm font-medium focus:outline-none -mb-px ${activePlotExplorerTab === 'plot' ? 'border-b-2 border-accent text-accent' : 'text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-t-md'}`}
+        >
+          {t('plot_explorer.tab_plot')}
+        </button>
+        <button
+          onClick={() => setActiveTab('export')}
+          className={`px-3 py-2 text-sm font-medium focus:outline-none -mb-px ${activePlotExplorerTab === 'export' ? 'border-b-2 border-accent text-accent' : 'text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-t-md'}`}
+        >
+          {t('plot_explorer.tab_export')}
+        </button>
+        <button
+          onClick={() => setActiveTab('code')}
+          className={`px-3 py-2 text-sm font-medium focus:outline-none -mb-px ${activePlotExplorerTab === 'code' ? 'border-b-2 border-accent text-accent' : 'text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-t-md'}`}
+        >
+          {t('plot_explorer.tab_code')}
+        </button>
+      </div>
+      <div className="flex-grow flex flex-col min-h-0">
+        {activePlotExplorerTab === 'code' ? (
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {renderTabContent()}
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto">
+            {renderTabContent()}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

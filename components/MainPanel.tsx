@@ -1,12 +1,14 @@
 
+
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { BarChart2 } from 'lucide-react';
 import { PlotPanel } from './PlotPanel';
+import { PlotlyPanel } from './PlotlyPanel';
 import { DataTable } from './DataTable';
 import { AnalysisPanel } from './AnalysisPanel';
 import { PlotExplorerPanel } from './PlotExplorerPanel';
 import { PlotToolbar } from './PlotToolbar';
-import type { DataPoint } from '../types';
+import type { DataPoint, UIState } from '../types';
 import { useAppContext } from '../contexts/AppContext';
 import { useFileContext } from '../contexts/FileContext';
 import { getPaddedDomain } from '../utils/regression';
@@ -23,6 +25,7 @@ const PlotPlaceholder: React.FC = () => {
 
 
 export const MainPanel: React.FC = () => {
+    const { t } = useAppContext();
     const { fileState, updateFileState } = useFileContext();
     const mainPanelRef = useRef<HTMLDivElement>(null);
     const rightPanelRef = useRef<HTMLDivElement>(null);
@@ -53,6 +56,7 @@ export const MainPanel: React.FC = () => {
         yAxisDecimals,
         xAxisLabel,
         yAxisLabel,
+        activePlotRenderer,
         exportConfig,
     } = uiState;
     
@@ -73,7 +77,7 @@ export const MainPanel: React.FC = () => {
     const [residualsWidth, setResidualsWidth] = useState(1.5);
     const [residualsStyle, setResidualsStyle] = useState('dashed');
 
-    const updateUiState = (updates: Partial<typeof uiState>) => {
+    const updateUiState = (updates: Partial<UIState>) => {
         updateFileState({ uiState: { ...uiState, ...updates }});
     }
 
@@ -208,9 +212,9 @@ export const MainPanel: React.FC = () => {
             <div ref={rightPanelRef} className="flex-grow flex flex-col" style={{ width: `calc(100% - ${tablePanelWidth}px - 6px)` }}>
                 {isPlotted && analysisResult ? (
                     <>
-                        <div ref={topPanelRef} className="flex" style={{ height: `${topPanelHeight}%` }}>
+                        <div ref={topPanelRef} className="flex" style={{ height: `${topPanelHeight}%`, minHeight: 0 }}>
                             <div className="flex-grow flex flex-col" style={{ width: `calc(100% - ${plotExplorerWidth}px - 6px)` }}>
-                                <div className="flex-shrink-0 border-b border-border dark:border-dark-border">
+                                 <div className="flex-shrink-0 border-b border-border dark:border-dark-border flex items-center justify-between">
                                     <PlotToolbar 
                                         activeTool={activePlotTool}
                                         setActiveTool={(tool) => updateUiState({ activePlotTool: tool })}
@@ -220,48 +224,91 @@ export const MainPanel: React.FC = () => {
                                         onClearSelection={handleClearSelection}
                                         hasSelection={selectedPlotIndices.size > 0}
                                     />
+                                     <div className="flex items-center text-xs px-2">
+                                        <button onClick={() => updateUiState({ activePlotRenderer: 'recharts' })} className={`px-2 py-1 rounded-md ${activePlotRenderer === 'recharts' ? 'bg-accent/20 text-accent' : 'text-text-secondary hover:bg-black/5'}`}>{t('main.plot_tab_recharts')}</button>
+                                        <button onClick={() => updateUiState({ activePlotRenderer: 'plotly' })} className={`px-2 py-1 rounded-md ${activePlotRenderer === 'plotly' ? 'bg-accent/20 text-accent' : 'text-text-secondary hover:bg-black/5'}`}>{t('main.plot_tab_plotly')}</button>
+                                    </div>
                                 </div>
-                                <div className="flex-grow p-4">
-                                    <PlotPanel
-                                        data={data}
-                                        residualsData={residualsData}
-                                        inactiveData={inactiveData}
-                                        unselectedData={unselectedData}
-                                        selectedData={selectedData}
-                                        analysisResult={analysisResult}
-                                        independentVar={independentVar}
-                                        dependentVar={dependentVar}
-                                        
-                                        chartStateRef={chartStateRef}
-                                        plotContainerRef={plotContainerRef}
-                                        activeTool={activePlotTool}
-                                        xAxisDomain={xAxisDomain} setXAxisDomain={(d) => updateUiState({ xAxisDomain: d })}
-                                        yAxisDomain={yAxisDomain} setYAxisDomain={(d) => updateUiState({ yAxisDomain: d })}
-                                        selectedIndices={selectedPlotIndices} setSelectedIndices={(i) => updateUiState({ selectedPlotIndices: i })}
-                                        
-                                        xAxisDecimals={xAxisDecimals}
-                                        yAxisDecimals={yAxisDecimals}
-                                        xAxisLabel={xAxisLabel}
-                                        yAxisLabel={yAxisLabel}
-                                        showTitle={exportConfig.showTitle}
-                                        title={exportConfig.title}
-                                        showLegend={exportConfig.showLegend}
-                                        showGrid={showGrid}
-                                        showObservations={showObservations}
-                                        showLine={showLine}
-                                        showResiduals={showResiduals}
-                                        scatterColor={scatterColor}
-                                        scatterOpacity={scatterOpacity}
-                                        scatterSize={scatterSize}
-                                        lineColor={lineColor}
-                                        lineOpacity={lineOpacity}
-                                        lineWidth={lineWidth}
-                                        lineStyle={lineStyle}
-                                        residualsColor={residualsColor}
-                                        residualsOpacity={residualsOpacity}
-                                        residualsWidth={residualsWidth}
-                                        residualsStyle={residualsStyle}
-                                    />
+                                <div className="flex-grow p-4 min-h-0">
+                                    {activePlotRenderer === 'recharts' ? (
+                                        <PlotPanel
+                                            data={data}
+                                            residualsData={residualsData}
+                                            inactiveData={inactiveData}
+                                            unselectedData={unselectedData}
+                                            selectedData={selectedData}
+                                            analysisResult={analysisResult}
+                                            independentVar={independentVar}
+                                            dependentVar={dependentVar}
+                                            
+                                            chartStateRef={chartStateRef}
+                                            plotContainerRef={plotContainerRef}
+                                            activeTool={activePlotTool}
+                                            xAxisDomain={xAxisDomain} setXAxisDomain={(d) => updateUiState({ xAxisDomain: d })}
+                                            yAxisDomain={yAxisDomain} setYAxisDomain={(d) => updateUiState({ yAxisDomain: d })}
+                                            selectedIndices={selectedPlotIndices} setSelectedIndices={(i) => updateUiState({ selectedPlotIndices: i })}
+                                            
+                                            xAxisDecimals={xAxisDecimals}
+                                            yAxisDecimals={yAxisDecimals}
+                                            xAxisLabel={xAxisLabel}
+                                            yAxisLabel={yAxisLabel}
+                                            showTitle={exportConfig.showTitle}
+                                            title={exportConfig.title}
+                                            showLegend={exportConfig.showLegend}
+                                            showGrid={showGrid}
+                                            showObservations={showObservations}
+                                            showLine={showLine}
+                                            showResiduals={showResiduals}
+                                            scatterColor={scatterColor}
+                                            scatterOpacity={scatterOpacity}
+                                            scatterSize={scatterSize}
+                                            lineColor={lineColor}
+                                            lineOpacity={lineOpacity}
+                                            lineWidth={lineWidth}
+                                            lineStyle={lineStyle}
+                                            residualsColor={residualsColor}
+                                            residualsOpacity={residualsOpacity}
+                                            residualsWidth={residualsWidth}
+                                            residualsStyle={residualsStyle}
+                                        />
+                                    ) : (
+                                        <PlotlyPanel
+                                            data={data}
+                                            residualsData={residualsData}
+                                            inactiveData={inactiveData}
+                                            unselectedData={unselectedData}
+                                            selectedData={selectedData}
+                                            analysisResult={analysisResult}
+                                            independentVar={independentVar}
+                                            dependentVar={dependentVar}
+                                            
+                                            activeTool={activePlotTool}
+                                            xAxisDomain={xAxisDomain} setXAxisDomain={(d) => updateUiState({ xAxisDomain: d })}
+                                            yAxisDomain={yAxisDomain} setYAxisDomain={(d) => updateUiState({ yAxisDomain: d })}
+                                            selectedIndices={selectedPlotIndices} setSelectedIndices={(i) => updateUiState({ selectedPlotIndices: i })}
+                                            
+                                            xAxisLabel={xAxisLabel}
+                                            yAxisLabel={yAxisLabel}
+                                            showTitle={exportConfig.showTitle}
+                                            title={exportConfig.title}
+                                            showLegend={exportConfig.showLegend}
+                                            showGrid={showGrid}
+                                            showObservations={showObservations}
+                                            showLine={showLine}
+                                            showResiduals={showResiduals}
+                                            scatterColor={scatterColor}
+                                            scatterOpacity={scatterOpacity}
+                                            scatterSize={scatterSize}
+                                            lineColor={lineColor}
+                                            lineOpacity={lineOpacity}
+                                            lineWidth={lineWidth}
+                                            lineStyle={lineStyle}
+                                            residualsColor={residualsColor}
+                                            residualsOpacity={residualsOpacity}
+                                            residualsWidth={residualsWidth}
+                                            residualsStyle={residualsStyle}
+                                        />
+                                    )}
                                 </div>
                             </div>
                             <div
