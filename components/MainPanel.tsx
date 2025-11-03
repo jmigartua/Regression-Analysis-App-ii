@@ -181,22 +181,22 @@ export const MainPanel: React.FC = () => {
         unselectedData, 
         selectedData, 
         inactiveData,
-        residualsData
+        activePlotData
     } = useMemo(() => {
-        const activePlotData: DataPoint[] = [];
+        const currentActivePlotData: DataPoint[] = [];
         const inactivePlotData: DataPoint[] = [];
         const dataPointToOriginalIndex = new Map<DataPoint, number>();
         data.forEach((d, i) => dataPointToOriginalIndex.set(d, i));
         data.forEach((d, i) => {
-            if (selectedRowIndices.has(i)) activePlotData.push(d);
+            if (selectedRowIndices.has(i)) currentActivePlotData.push(d);
             else inactivePlotData.push(d);
         });
-        const selectedPlotData = activePlotData.filter((d) => {
+        const selectedPlotData = currentActivePlotData.filter((d) => {
             const originalIndex = dataPointToOriginalIndex.get(d);
             return originalIndex !== undefined && selectedPlotIndices.has(originalIndex);
         });
-        const unselectedPlotData = activePlotData.filter(d => !selectedPlotData.includes(d));
-        return { unselectedData: unselectedPlotData, selectedData: selectedPlotData, inactiveData: inactivePlotData, residualsData: activePlotData };
+        const unselectedPlotData = currentActivePlotData.filter(d => !selectedPlotData.includes(d));
+        return { unselectedData: unselectedPlotData, selectedData: selectedPlotData, inactiveData: inactivePlotData, activePlotData: currentActivePlotData };
     }, [data, selectedRowIndices, selectedPlotIndices]);
 
 
@@ -237,7 +237,7 @@ export const MainPanel: React.FC = () => {
                                     {activePlotRenderer === 'recharts' ? (
                                         <PlotPanel
                                             data={data}
-                                            residualsData={residualsData}
+                                            residualsData={activePlotData}
                                             inactiveData={inactiveData}
                                             unselectedData={unselectedData}
                                             selectedData={selectedData}
@@ -278,18 +278,18 @@ export const MainPanel: React.FC = () => {
                                     ) : (
                                         <PlotlyPanel
                                             data={data}
-                                            residualsData={residualsData}
+                                            residualsData={activePlotData}
                                             inactiveData={inactiveData}
-                                            unselectedData={unselectedData}
-                                            selectedData={selectedData}
+                                            activeData={activePlotData}
                                             analysisResult={analysisResult}
                                             independentVar={independentVar}
                                             dependentVar={dependentVar}
                                             
-                                            activeTool={activePlotTool}
+                                            onAnalysisSelectionChange={(newIndices: Set<number>) => updateFileState({ selectedRowIndices: newIndices })}
+                                            totalDataPoints={data.length}
+                                            
                                             xAxisDomain={xAxisDomain} setXAxisDomain={(d) => updateUiState({ xAxisDomain: d })}
                                             yAxisDomain={yAxisDomain} setYAxisDomain={(d) => updateUiState({ yAxisDomain: d })}
-                                            selectedIndices={selectedPlotIndices} setSelectedIndices={(i) => updateUiState({ selectedPlotIndices: i })}
                                             
                                             xAxisLabel={xAxisLabel}
                                             yAxisLabel={yAxisLabel}
