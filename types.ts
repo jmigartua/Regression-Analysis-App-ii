@@ -53,6 +53,23 @@ export interface UIState {
   activePlotExplorerTab: 'series' | 'plot' | 'export' | 'code';
   exportConfig: ExportConfig;
   uiRevision?: number;
+
+  // Plot Style State
+  showGrid: boolean;
+  showObservations: boolean;
+  showLine: boolean;
+  showResiduals: boolean;
+  scatterColor: string;
+  scatterOpacity: number;
+  scatterSize: number;
+  lineColor: string;
+  lineOpacity: number;
+  lineWidth: number;
+  lineStyle: string; // 'solid', 'dashed', 'dotted'
+  residualsColor: string;
+  residualsOpacity: number;
+  residualsWidth: number;
+  residualsStyle: string; // 'solid', 'dashed', 'dotted'
 }
 
 export interface FileState {
@@ -67,4 +84,5 @@ export interface FileState {
     selectedRowIndices: Set<number>;
     activeWorkspaceTab: 'analysis' | 'simulation';
     uiState: UIState;
+    simulationState: FileState | null;
 }

@@ -21,6 +21,7 @@ interface PlotlyPanelProps {
   yAxisDomain: UIState['yAxisDomain'];
   setYAxisDomain: (domain: [any, any]) => void;
   onAnalysisSelectionChange: (indices: Set<number>) => void;
+  onResetView: () => void;
   totalDataPoints: number;
   selectedRowIndices: Set<number>;
   uiRevision?: number;
@@ -60,7 +61,7 @@ const getDashStyle = (style: string) => {
 export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
     const { 
         data, activeData, independentVar, dependentVar, analysisResult,
-        xAxisDomain, setXAxisDomain, yAxisDomain, setYAxisDomain, onAnalysisSelectionChange, totalDataPoints, selectedRowIndices,
+        xAxisDomain, setXAxisDomain, yAxisDomain, setYAxisDomain, onAnalysisSelectionChange, onResetView, totalDataPoints, selectedRowIndices,
         uiRevision,
         showGrid,
         showObservations, showLine, showResiduals,
@@ -198,9 +199,9 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
             }
         }
         if (eventData['xaxis.autorange']) {
-            // TODO: This event doesn't give the new range. We might need a different approach if we want to sync autorange back to state.
+            onResetView();
         }
-    }, [xAxisDomain, yAxisDomain, setXAxisDomain, setYAxisDomain]);
+    }, [xAxisDomain, yAxisDomain, setXAxisDomain, setYAxisDomain, onResetView]);
 
     const handleSelection = useCallback((eventData: any) => {
         // This handler is now specifically for when a selection is actively made.

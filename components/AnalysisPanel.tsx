@@ -10,6 +10,7 @@ interface AnalysisPanelProps {
   result: AnalysisResult;
   independentVar: string;
   dependentVar: string;
+  sidebarPosition?: 'left' | 'right';
 }
 
 const ResidualTooltip: React.FC<{ active?: boolean; payload?: any[]; independentVar: string; }> = ({ active, payload, independentVar }) => {
@@ -59,7 +60,7 @@ const FittingOption: React.FC<{ label: string; active?: boolean; disabled?: bool
 );
 
 
-export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independentVar, dependentVar }) => {
+export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independentVar, dependentVar, sidebarPosition = 'left' }) => {
     const { t, theme } = useAppContext();
     const [activeTab, setActiveTab] = useState<'analysis' | 'residuals'>('analysis');
     const [decimalPoints, setDecimalPoints] = useState(4);
@@ -85,8 +86,8 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result, independen
             </div>
             <div className="flex-grow overflow-auto">
                 {activeTab === 'analysis' && (
-                     <div className="flex h-full">
-                        <div className="w-64 flex-shrink-0 bg-sidebar dark:bg-dark-sidebar border-r border-border dark:border-dark-border overflow-y-auto">
+                     <div className={`flex h-full ${sidebarPosition === 'right' ? 'flex-row-reverse' : ''}`}>
+                        <div className={`w-64 flex-shrink-0 bg-sidebar dark:bg-dark-sidebar overflow-y-auto ${sidebarPosition === 'right' ? 'border-l border-border dark:border-dark-border' : 'border-r border-border dark:border-dark-border'}`}>
                             <Section title={t('analysis.regression_type_title')}>
                                 <FittingOption label={t('analysis.linear_regression')} active />
                                 <FittingOption label={t('analysis.higher_order_regressions')} disabled />

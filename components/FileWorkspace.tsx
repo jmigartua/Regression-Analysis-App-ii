@@ -2,9 +2,33 @@
 import React from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { useFileContext } from '../contexts/FileContext';
+import type { FileState } from '../types';
 
 import { MainPanel } from './MainPanel';
 import { SimulationPanel } from './SimulationPanel';
+
+// A helper function for cloning the file state for simulation
+const deepCloneFileState = (fileState: FileState): FileState => {
+    const newId = `${fileState.id}-sim`;
+    
+    const cloned = {
+        ...fileState,
+        id: newId,
+        data: JSON.parse(JSON.stringify(fileState.data)),
+        analysisResult: fileState.analysisResult ? JSON.parse(JSON.stringify(fileState.analysisResult)) : null,
+        selectedRowIndices: new Set(fileState.selectedRowIndices),
+        uiState: {
+            ...fileState.uiState,
+            selectedPlotIndices: new Set(fileState.uiState.selectedPlotIndices),
+            exportConfig: {
+                ...fileState.uiState.exportConfig
+            }
+        },
+        simulationState: null // prevent infinite recursion
+    };
+    return cloned;
+};
+
 
 export const FileWorkspace: React.FC = () => {
     const { t } = useAppContext();
@@ -16,7 +40,12 @@ export const FileWorkspace: React.FC = () => {
 
     const { activeWorkspaceTab } = fileState;
     const setActiveTab = (tab: 'analysis' | 'simulation') => {
-        updateFileState({ activeWorkspaceTab: tab });
+        if (tab === 'simulation' && !fileState.simulationState) {
+            const newSimState = deepCloneFileState(fileState);
+            updateFileState({ activeWorkspaceTab: tab, simulationState: newSimState });
+        } else {
+            updateFileState({ activeWorkspaceTab: tab });
+        }
     };
 
     return (

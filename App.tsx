@@ -86,6 +86,7 @@ export default function App() {
         isPlotted: false,
         selectedRowIndices: new Set(parsedData.map((_, i) => i)),
         activeWorkspaceTab: 'analysis',
+        simulationState: null,
         uiState: {
           tablePanelWidth: 400,
           plotExplorerWidth: 256,
@@ -115,7 +116,23 @@ export default function App() {
             theme: 'current',
             showLegend: true,
             showTitle: true,
-          }
+          },
+          // Plot styles
+          showGrid: true,
+          showObservations: true,
+          showLine: true,
+          showResiduals: true,
+          scatterColor: '#4f46e5',
+          scatterOpacity: 1,
+          scatterSize: 30,
+          lineColor: '#10b981',
+          lineOpacity: 1,
+          lineWidth: 2,
+          lineStyle: 'solid',
+          residualsColor: '#f97316',
+          residualsOpacity: 0.7,
+          residualsWidth: 1.5,
+          residualsStyle: 'dashed',
         }
       };
 
@@ -151,6 +168,15 @@ export default function App() {
           uiRevision: 0,
           selectedPlotIndices: new Set(parsedState.uiState.selectedPlotIndices),
         },
+        // Ensure simulationState is reconstructed if it exists
+        simulationState: parsedState.simulationState ? {
+            ...parsedState.simulationState,
+            selectedRowIndices: new Set(parsedState.simulationState.selectedRowIndices),
+            uiState: {
+              ...parsedState.simulationState.uiState,
+              selectedPlotIndices: new Set(parsedState.simulationState.uiState.selectedPlotIndices),
+            }
+        } : null
       };
 
       setFiles(prev => ({ ...prev, [newFileId]: newFileState }));
@@ -165,26 +191,31 @@ export default function App() {
   const handleSaveAnalysis = useCallback(() => {
     if (!activeFileState) return;
 
-    const { file, selectedRowIndices, uiState, ...rest } = activeFileState;
-    const { uiRevision, selectedPlotIndices, ...restUiState } = uiState;
-    
-    const savableState = {
-      ...rest,
-      fileName: file.name,
-      selectedRowIndices: Array.from(selectedRowIndices),
-      uiState: {
-        ...restUiState,
-        selectedPlotIndices: Array.from(selectedPlotIndices),
-      },
+    const serializeState = (state: FileState) => {
+      const { file, selectedRowIndices, uiState, simulationState, ...rest } = state;
+      const { uiRevision, selectedPlotIndices, ...restUiState } = uiState;
+      
+      return {
+        ...rest,
+        fileName: file.name,
+        selectedRowIndices: Array.from(selectedRowIndices),
+        uiState: {
+          ...restUiState,
+          selectedPlotIndices: Array.from(selectedPlotIndices),
+        },
+        simulationState: simulationState ? serializeState(simulationState) : null,
+      };
     };
 
+    const savableState = serializeState(activeFileState);
+    
     const jsonString = JSON.stringify(savableState, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${file.name.replace(/\.[^/.]+$/, "")}.lra`;
+    a.download = `${activeFileState.file.name.replace(/\.[^/.]+$/, "")}.lra`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -227,12 +258,30 @@ export default function App() {
         
         // Always create a new uiState object and increment revision
         // This ensures any state change that should trigger a plot re-render does so correctly.
-        updatedFile.uiState = { 
-            ...fileToUpdate.uiState, 
-            ...(updates.uiState || {}), // Apply new uiState updates if they exist
-            uiRevision: (fileToUpdate.uiState.uiRevision || 0) + 1 
-        };
+        if (updates.uiState) {
+          updatedFile.uiState = { 
+              ...fileToUpdate.uiState, 
+              ...updates.uiState,
+              uiRevision: (fileToUpdate.uiState.uiRevision || 0) + 1 
+          };
+        }
         
+        // Handle nested simulation state update
+        if (updates.simulationState) {
+            const currentSimState = fileToUpdate.simulationState;
+            const updatedSimState = { ...currentSimState, ...updates.simulationState } as FileState;
+            
+            // Increment UI revision for simulation state if its UI was changed
+            if (updates.simulationState.uiState && currentSimState) {
+                 updatedSimState.uiState = {
+                    ...currentSimState.uiState,
+                    ...updates.simulationState.uiState,
+                    uiRevision: (currentSimState.uiState.uiRevision || 0) + 1
+                 };
+            }
+            updatedFile.simulationState = updatedSimState;
+        }
+
         return { ...currentFiles, [fileId]: updatedFile };
     });
   }, []);
@@ -279,6 +328,40 @@ export default function App() {
       }
     }
   }, [activeData, activeFileState?.isPlotted, activeFileState?.independentVar, activeFileState?.dependentVar, activeFileId, t, updateFileState]);
+
+  // This effect performs regression analysis for the SIMULATION state
+  useEffect(() => {
+    if (!activeFileId || !activeFileState?.simulationState) return;
+
+    const simState = activeFileState.simulationState;
+    const simActiveData = simState.data.filter((_, index) => simState.selectedRowIndices.has(index));
+
+    if (!simState.isPlotted || simActiveData.length < 2 || !simState.independentVar || !simState.dependentVar) {
+      if (simState.analysisResult !== null) {
+        updateFileState(activeFileId, { simulationState: { ...simState, analysisResult: null } });
+      }
+      return;
+    }
+    
+    if (simState.independentVar === simState.dependentVar) {
+      if (simState.analysisResult !== null) {
+        updateFileState(activeFileId, { simulationState: { ...simState, analysisResult: null } });
+      }
+      return;
+    }
+
+    try {
+      const result = calculateLinearRegression(simActiveData, simState.independentVar, simState.dependentVar);
+      if (!areAnalysisResultsNumericallyEqual(simState.analysisResult, result)) {
+        updateFileState(activeFileId, { simulationState: { ...simState, analysisResult: result } });
+      }
+    } catch (e) {
+      console.error("Simulation analysis failed:", e);
+      if (simState.analysisResult !== null) {
+        updateFileState(activeFileId, { simulationState: { ...simState, analysisResult: null } });
+      }
+    }
+  }, [activeFileState?.simulationState, activeFileId, updateFileState]);
 
   const tableData = useMemo(() => {
     if (!activeFileState) return [];
