@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
@@ -107,49 +106,41 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
   }
 
   const handleExport = async () => {
-    const svgElement = props.plotContainerRef.current?.querySelector('svg');
-    if (!svgElement) return;
+    const svgElement = (() => {
+      const container = props.plotContainerRef.current;
+      if (!container) return null;
+      const surfaces = Array.from(container.querySelectorAll('svg.recharts-surface')) as SVGSVGElement[];
+      // The main chart's SVG is inside a .recharts-wrapper, but crucially not inside a
+      // .recharts-legend-wrapper. This prevents exporting a legend icon by mistake.
+      return surfaces.find(surface =>
+        surface.closest('.recharts-wrapper') &&
+        !surface.closest('.recharts-legend-wrapper')
+      ) ?? null;
+    })();
+    if (!svgElement) {
+        console.error("Could not find the recharts SVG surface to export.");
+        return;
+    }
 
     const { width, height, dpi, format, fileName, fontFamily, fontSize, title, xAxisLabel, yAxisLabel } = exportConfig;
 
-    // 1. Get all CSS rules from all stylesheets. This is more robust than inlining.
-    const cssRules = Array.from(document.styleSheets)
-        .map(sheet => {
-            try {
-                return Array.from(sheet.cssRules)
-                    .map(rule => rule.cssText)
-                    .join(' ');
-            } catch (e) {
-                console.warn('Cannot read stylesheet, likely a cross-origin security restriction.', sheet.href);
-                return '';
-            }
-        })
-        .join(' ');
-    
-    // 2. Clone the SVG element
+    // 1. Clone the SVG element
     const svgClone = svgElement.cloneNode(true) as SVGSVGElement;
 
-    // 3. Set explicit dimensions for export
+    // 2. Set explicit dimensions and namespace for export
     svgClone.setAttribute('width', `${width}`);
     svgClone.setAttribute('height', `${height}`);
+    svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
-    // 4. Create a <defs> and <style> element with all the captured CSS
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-    style.setAttribute('type', 'text/css');
-    style.innerHTML = `<![CDATA[${cssRules}]]>`;
-    defs.appendChild(style);
-    svgClone.insertBefore(defs, svgClone.firstChild);
-
-    // 5. Add a background rectangle as the first rendered element
+    // 3. Add a background rectangle as the first rendered element
     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     rect.setAttribute('width', '100%');
     rect.setAttribute('height', '100%');
     const bgColor = theme === 'dark' ? '#282c34' : '#ffffff'; // from tailwind config
     rect.setAttribute('fill', bgColor);
-    svgClone.insertBefore(rect, defs.nextSibling);
+    svgClone.insertBefore(rect, svgClone.firstChild);
 
-    // 6. Update fonts, titles, and labels
+    // 4. Update fonts, titles, and labels
     const allTextElements = svgClone.querySelectorAll('text');
     allTextElements.forEach(t => {
         t.setAttribute('font-family', fontFamily);
@@ -179,21 +170,20 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
         svgClone.appendChild(titleEl);
     }
     
-    // 7. Serialize and trigger download
+    // 5. Serialize and trigger download
     const svgString = new XMLSerializer().serializeToString(svgClone);
     
     if (format === 'svg') {
-      const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
-      const url = URL.createObjectURL(svgBlob);
-      triggerDownload(url, `${fileName}.svg`);
-      URL.revokeObjectURL(url);
+      const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+      triggerDownload(dataUrl, `${fileName}.svg`);
     } else { // PNG
       const image = new Image();
       const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(svgBlob);
+      const objectUrl = URL.createObjectURL(svgBlob);
 
+      // It's crucial to revoke the object URL when we're done to avoid memory leaks
       const cleanup = () => {
-          URL.revokeObjectURL(url);
+        URL.revokeObjectURL(objectUrl);
       };
 
       image.onload = () => {
@@ -203,6 +193,7 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
         canvas.height = height * scale;
         const ctx = canvas.getContext('2d');
         if (!ctx) {
+            console.error("Failed to get canvas context for PNG export.");
             cleanup();
             return;
         }
@@ -214,12 +205,13 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
         triggerDownload(pngUrl, `${fileName}.png`);
         cleanup();
       };
+
       image.onerror = (err) => { 
-        console.error("SVG to PNG conversion failed.", err);
+        console.error("SVG to PNG conversion failed. The browser could not load the generated SVG image.", err);
         cleanup();
       };
       
-      image.src = url;
+      image.src = objectUrl;
     }
   }
 
