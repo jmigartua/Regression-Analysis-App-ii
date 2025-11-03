@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useFileContext } from '../contexts/FileContext';
 import { PlottingWorkspace } from './PlottingWorkspace';
@@ -57,6 +56,7 @@ export const SimulationPanel: React.FC = () => {
                     updateFileState={() => {}} // Read-only, so pass a no-op function
                     explorerPosition="left"
                     isReadOnly={true}
+                    forceRenderer="plotly"
                 />
             </div>
 
@@ -75,6 +75,7 @@ export const SimulationPanel: React.FC = () => {
                     updateFileState={updateSimulationState}
                     explorerPosition="right"
                     analysisSidebarPosition="right"
+                    forceRenderer="plotly"
                 />
             </div>
         </div>

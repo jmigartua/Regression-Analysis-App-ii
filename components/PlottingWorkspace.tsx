@@ -25,9 +25,10 @@ interface PlottingWorkspaceProps {
     explorerPosition: 'left' | 'right';
     isReadOnly?: boolean;
     analysisSidebarPosition?: 'left' | 'right';
+    forceRenderer?: 'recharts' | 'plotly';
 }
 
-export const PlottingWorkspace: React.FC<PlottingWorkspaceProps> = ({ fileState, updateFileState, explorerPosition, isReadOnly = false, analysisSidebarPosition = 'left' }) => {
+export const PlottingWorkspace: React.FC<PlottingWorkspaceProps> = ({ fileState, updateFileState, explorerPosition, isReadOnly = false, analysisSidebarPosition = 'left', forceRenderer }) => {
     const { t } = useAppContext();
     
     const topPanelRef = useRef<HTMLDivElement>(null);
@@ -57,6 +58,8 @@ export const PlottingWorkspace: React.FC<PlottingWorkspaceProps> = ({ fileState,
         exportConfig,
         ...plotStyles
     } = uiState;
+
+    const currentRenderer = forceRenderer || activePlotRenderer;
     
     const updateUiState = (updates: Partial<UIState>) => {
         if (isReadOnly) return;
@@ -201,7 +204,7 @@ export const PlottingWorkspace: React.FC<PlottingWorkspaceProps> = ({ fileState,
 
                         <div className="flex-grow flex flex-col" style={{ width: `calc(100% - ${plotExplorerWidth}px - 6px)` }}>
                                 <div className="flex-shrink-0 border-b border-border dark:border-dark-border flex items-center justify-between">
-                                {activePlotRenderer === 'recharts' ? (
+                                {currentRenderer === 'recharts' ? (
                                     <PlotToolbar 
                                         activeTool={activePlotTool}
                                         setActiveTool={(tool) => updateUiState({ activePlotTool: tool })}
@@ -213,12 +216,20 @@ export const PlottingWorkspace: React.FC<PlottingWorkspaceProps> = ({ fileState,
                                     />
                                 ) : <div />}
                                     <div className="flex items-center text-xs px-2">
-                                    <button onClick={() => updateUiState({ activePlotRenderer: 'recharts' })} className={`px-2 py-1 rounded-md ${activePlotRenderer === 'recharts' ? 'bg-accent/20 text-accent' : 'text-text-secondary hover:bg-black/5'}`}>{t('main.plot_tab_recharts')}</button>
-                                    <button onClick={() => updateUiState({ activePlotRenderer: 'plotly' })} className={`px-2 py-1 rounded-md ${activePlotRenderer === 'plotly' ? 'bg-accent/20 text-accent' : 'text-text-secondary hover:bg-black/5'}`}>{t('main.plot_tab_plotly')}</button>
+                                    <button 
+                                        onClick={() => !forceRenderer && updateUiState({ activePlotRenderer: 'recharts' })} 
+                                        className={`px-2 py-1 rounded-md ${currentRenderer === 'recharts' ? 'bg-accent/20 text-accent' : 'text-text-secondary hover:bg-black/5'} disabled:opacity-70 disabled:cursor-not-allowed`}
+                                        disabled={!!forceRenderer}
+                                    >{t('main.plot_tab_recharts')}</button>
+                                    <button 
+                                        onClick={() => !forceRenderer && updateUiState({ activePlotRenderer: 'plotly' })} 
+                                        className={`px-2 py-1 rounded-md ${currentRenderer === 'plotly' ? 'bg-accent/20 text-accent' : 'text-text-secondary hover:bg-black/5'} disabled:opacity-70 disabled:cursor-not-allowed`}
+                                        disabled={!!forceRenderer}
+                                    >{t('main.plot_tab_plotly')}</button>
                                 </div>
                             </div>
                             <div className="flex-grow p-4 min-h-0">
-                                {activePlotRenderer === 'recharts' ? (
+                                {currentRenderer === 'recharts' ? (
                                     <PlotPanel
                                         data={data}
                                         residualsData={validActivePlotData}
