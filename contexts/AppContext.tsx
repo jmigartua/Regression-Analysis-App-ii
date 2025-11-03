@@ -16,33 +16,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>('dark');
   const [language, setLanguageState] = useState<Language>('en');
-  const [translations, setTranslations] = useState<Record<string, any>>({});
-
-  useEffect(() => {
-    const loadTranslations = async () => {
-        try {
-            const [enRes, esRes, euRes] = await Promise.all([
-                fetch('/locales/en.json'),
-                fetch('/locales/es.json'),
-                fetch('/locales/eu.json')
-            ]);
-            if (!enRes.ok || !esRes.ok || !euRes.ok) {
-                throw new Error('Failed to fetch one or more translation files.');
-            }
-            const [en, es, eu] = await Promise.all([
-                enRes.json(),
-                esRes.json(),
-                euRes.json()
-            ]);
-            setTranslations({ en, es, eu });
-        } catch (error) {
-            console.error("Could not load translation files, using keys as fallback.", error);
-            // On failure, the app will use translation keys as text
-            setTranslations({ en: {}, es: {}, eu: {} });
-        }
-    };
-    loadTranslations();
-  }, []);
+  const [translations, setTranslations] = useState<Record<string, string> | null>(null);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme;
@@ -54,6 +28,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const initialLang = savedLang || 'en';
     setLanguage(initialLang);
   }, []);
+  
+  useEffect(() => {
+    const fetchTranslations = async (lang: Language) => {
+      try {
+        const response = await fetch(`/locales/${lang}.json`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch translation file for ${lang}`);
+        }
+        const data = await response.json();
+        setTranslations(data);
+      } catch (error) {
+        console.error(error);
+        if (lang !== 'en') {
+          // Fallback to English if the selected language fails
+          await fetchTranslations('en');
+        } else {
+          // If English fails, there's a bigger issue.
+          setTranslations({});
+        }
+      }
+    };
+    fetchTranslations(language);
+  }, [language]);
+
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
@@ -71,15 +69,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const t = useCallback((key: string, replacements: { [key: string]: string } = {}) => {
-    const translationSet = translations[language];
-    let translatedString = (translationSet && translationSet[key]) ? translationSet[key] : key;
+    if (!translations) {
+        return key; // Return key if translations are not loaded
+    }
+    let translatedString = translations[key] || key;
     
     Object.keys(replacements).forEach(placeholder => {
         translatedString = translatedString.replace(`{${placeholder}}`, replacements[placeholder]);
     });
 
     return translatedString;
-  }, [language, translations]);
+  }, [translations]);
+  
+  if (translations === null) {
+      return null; // Render nothing until translations are loaded to prevent FOUC
+  }
 
   return (
     <AppContext.Provider value={{ theme, setTheme, language, setLanguage, t }}>
