@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, ReferenceArea } from 'recharts';
 import type { DataPoint, AnalysisResult } from '../types';
@@ -41,18 +42,20 @@ interface PlotPanelProps {
   residualsOpacity: number;
   residualsWidth: number;
   residualsStyle: string;
+  showLegend: boolean;
+  showTitle: boolean;
+  title: string;
+  tickSigFigs: number;
 }
 
-const formatTick = (tick: any): string => {
+const CustomTooltip: React.FC<{ active?: boolean; payload?: any[], tickSigFigs: number }> = ({ active, payload, tickSigFigs }) => {
+  const formatTick = (tick: any): string => {
     if (typeof tick !== 'number' || !isFinite(tick)) {
         return String(tick);
     }
-    // Use toPrecision for significant figures, then convert to Number to remove trailing zeros,
-    // then to string for display. This handles various scales gracefully.
-    return Number(tick.toPrecision(4)).toString();
-};
+    return Number(tick.toPrecision(tickSigFigs)).toString();
+  };
 
-const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-panel dark:bg-slate-900/80 p-3 border border-border dark:border-slate-700 rounded-md text-sm">
@@ -95,7 +98,8 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({
     showGrid, showObservations, showLine, showResiduals,
     scatterColor, scatterOpacity, scatterSize,
     lineColor, lineOpacity, lineWidth, lineStyle,
-    residualsColor, residualsOpacity, residualsWidth, residualsStyle
+    residualsColor, residualsOpacity, residualsWidth, residualsStyle,
+    showLegend, showTitle, title, tickSigFigs
 }) => {
     const { t, theme } = useAppContext();
     const [refArea, setRefArea] = useState<{ x1?: number, y1?: number, x2?: number, y2?: number }>({});
@@ -103,6 +107,13 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({
     
     const tickColor = theme === 'dark' ? '#94a3b8' : '#6b7280';
     const gridColor = theme === 'dark' ? '#334155' : '#e5e7eb';
+    
+    const formatTick = (tick: any): string => {
+        if (typeof tick !== 'number' || !isFinite(tick)) {
+            return String(tick);
+        }
+        return Number(tick.toPrecision(tickSigFigs)).toString();
+    };
 
     const handleMouseDown = (e: any) => {
         if (!e || !e.xValue || !e.yValue) return;
@@ -173,39 +184,42 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({
     const scatterBaseSize = scatterSize * scatterSize / 20;
 
     return (
-        <div ref={plotContainerRef} className="w-full h-full" style={{ cursor: activeTool === 'pan' ? 'move' : activeTool === 'select' ? 'crosshair' : 'default' }}>
-            <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart 
-                    margin={{ top: 5, right: 20, bottom: 20, left: 0 }}
-                    onMouseDown={handleMouseDown}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                >
-                    {showGrid && <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />}
-                    <XAxis type="number" dataKey={independentVar} name={independentVar} unit="" stroke={tickColor} domain={xAxisDomain} allowDataOverflow tickFormatter={formatTick} />
-                    <YAxis type="number" dataKey={dependentVar} name={dependentVar} unit="" stroke={tickColor} domain={yAxisDomain} allowDataOverflow tickFormatter={formatTick}/>
-                    <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
-                    <Legend />
-                    
-                    {showObservations && (
-                        <>
-                            <Scatter name="Inactive" data={inactiveData} fill="#9ca3af" fillOpacity={0.3} shape="circle" legendType="none" size={scatterBaseSize} />
-                            <Scatter name={t('plot.observations')} data={unselectedData} fill={scatterColor} fillOpacity={scatterOpacity} shape="circle" legendType="circle" size={scatterBaseSize} />
-                            <Scatter name="Selected" data={selectedData} fill="#f97316" fillOpacity={1} shape="circle" legendType="none" size={scatterBaseSize * 1.5} zIndex={100} />
-                        </>
-                    )}
+        <div ref={plotContainerRef} className="w-full h-full flex flex-col" style={{ cursor: activeTool === 'pan' ? 'move' : activeTool === 'select' ? 'crosshair' : 'default' }}>
+            {showTitle && <h3 className="text-center font-bold text-lg text-text-primary dark:text-gray-200 flex-shrink-0 mb-2">{title}</h3>}
+            <div className="flex-grow">
+                <ResponsiveContainer width="100%" height="100%">
+                    <ScatterChart 
+                        margin={{ top: 5, right: 20, bottom: 20, left: 0 }}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                    >
+                        {showGrid && <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />}
+                        <XAxis type="number" dataKey={independentVar} name={independentVar} unit="" stroke={tickColor} domain={xAxisDomain} allowDataOverflow tickFormatter={formatTick} />
+                        <YAxis type="number" dataKey={dependentVar} name={dependentVar} unit="" stroke={tickColor} domain={yAxisDomain} allowDataOverflow tickFormatter={formatTick}/>
+                        <Tooltip content={<CustomTooltip tickSigFigs={tickSigFigs} />} cursor={{ strokeDasharray: '3 3' }} />
+                        {showLegend && <Legend />}
+                        
+                        {showObservations && (
+                            <>
+                                <Scatter name="Inactive" data={inactiveData} fill="#9ca3af" fillOpacity={0.3} shape="circle" legendType="none" size={scatterBaseSize} />
+                                <Scatter name={t('plot.observations')} data={unselectedData} fill={scatterColor} fillOpacity={scatterOpacity} shape="circle" legendType="circle" size={scatterBaseSize} />
+                                <Scatter name="Selected" data={selectedData} fill="#f97316" fillOpacity={1} shape="circle" legendType="none" size={scatterBaseSize * 1.5} zIndex={100} />
+                            </>
+                        )}
 
-                    {showResiduals && analysisResult && (
-                        <Scatter isAnimationActive={false} data={residualsData} fill="transparent" shape={(props) => <ResidualLine {...props} independentVar={independentVar} analysisResult={analysisResult} color={residualsColor} opacity={residualsOpacity} width={residualsWidth} style={residualsStyle} />} key={`residuals-${residualsData.length}`} />
-                    )}
-                    
-                    {analysisResult?.regressionLine && showLine && <Line name={t('plot.regression_line')} type="monotone" dataKey={dependentVar} data={analysisResult.regressionLine} stroke={lineColor} strokeOpacity={lineOpacity} dot={false} activeDot={false} strokeWidth={lineWidth} strokeDasharray={getDashArray(lineStyle)} legendType="line" />}
+                        {showResiduals && analysisResult && (
+                            <Scatter isAnimationActive={false} data={residualsData} fill="transparent" shape={(props) => <ResidualLine {...props} independentVar={independentVar} analysisResult={analysisResult} color={residualsColor} opacity={residualsOpacity} width={residualsWidth} style={residualsStyle} />} key={`residuals-${residualsData.length}`} />
+                        )}
+                        
+                        {analysisResult?.regressionLine && showLine && <Line name={t('plot.regression_line')} type="monotone" dataKey={dependentVar} data={analysisResult.regressionLine} stroke={lineColor} strokeOpacity={lineOpacity} dot={false} activeDot={false} strokeWidth={lineWidth} strokeDasharray={getDashArray(lineStyle)} legendType="line" />}
 
-                    {refArea.x1 && refArea.x2 && (
-                        <ReferenceArea x1={refArea.x1} x2={refArea.x2} y1={refArea.y1} y2={refArea.y2} strokeOpacity={0.3} stroke="#8884d8" fill="#8884d8" fillOpacity={0.2} />
-                    )}
-                </ScatterChart>
-            </ResponsiveContainer>
+                        {refArea.x1 && refArea.x2 && (
+                            <ReferenceArea x1={refArea.x1} x2={refArea.x2} y1={refArea.y1} y2={refArea.y2} strokeOpacity={0.3} stroke="#8884d8" fill="#8884d8" fillOpacity={0.2} />
+                        )}
+                    </ScatterChart>
+                </ResponsiveContainer>
+            </div>
         </div>
     );
 };

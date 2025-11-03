@@ -28,6 +28,7 @@ export interface ExportConfig {
   fontSize: number;
   theme: 'current' | 'grayscale' | 'publication';
   showLegend: boolean;
+  showTitle: boolean;
 }
 
 export interface UIState {
@@ -40,9 +41,10 @@ export interface UIState {
   activePlotTool: 'pan' | 'select' | null;
   xAxisDomain: [any, any];
   yAxisDomain: [any, any];
+  tickSigFigs: number;
 
   // Plot explorer state
-  activePlotExplorerTab: 'style' | 'export';
+  activePlotExplorerTab: 'series' | 'plot' | 'export';
   exportConfig: ExportConfig;
 }
 

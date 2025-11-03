@@ -48,7 +48,9 @@ export const MainPanel: React.FC = () => {
         activePlotTool,
         xAxisDomain,
         yAxisDomain,
-        selectedPlotIndices
+        selectedPlotIndices,
+        tickSigFigs,
+        exportConfig,
     } = uiState;
     
     // Plot style state (could also be moved to uiState if desired)
@@ -233,7 +235,11 @@ export const MainPanel: React.FC = () => {
                                         xAxisDomain={xAxisDomain} setXAxisDomain={(d) => updateUiState({ xAxisDomain: d })}
                                         yAxisDomain={yAxisDomain} setYAxisDomain={(d) => updateUiState({ yAxisDomain: d })}
                                         selectedIndices={selectedPlotIndices} setSelectedIndices={(i) => updateUiState({ selectedPlotIndices: i })}
-
+                                        
+                                        tickSigFigs={tickSigFigs}
+                                        showTitle={exportConfig.showTitle}
+                                        title={exportConfig.title}
+                                        showLegend={exportConfig.showLegend}
                                         showGrid={showGrid}
                                         showObservations={showObservations}
                                         showLine={showLine}

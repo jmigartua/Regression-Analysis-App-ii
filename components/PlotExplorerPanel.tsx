@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
 import { useFileContext } from '../contexts/FileContext';
-import type { UIState } from '../types';
+import type { UIState, ExportConfig } from '../types';
 
 interface PlotExplorerPanelProps {
   plotContainerRef: React.RefObject<HTMLDivElement>;
@@ -98,10 +99,50 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
   if (!fileState) return null;
 
   const { uiState } = fileState;
-  const { activePlotExplorerTab, exportConfig } = uiState;
-  const setActiveTab = (tab: 'style' | 'export') => updateFileState({ uiState: { ...uiState, activePlotExplorerTab: tab }});
+  const { activePlotExplorerTab, exportConfig, xAxisDomain, yAxisDomain, tickSigFigs } = uiState;
+  const setActiveTab = (tab: UIState['activePlotExplorerTab']) => updateFileState({ uiState: { ...uiState, activePlotExplorerTab: tab }});
 
-  const updateExportConfig = (updates: Partial<typeof exportConfig>) => {
+  const [localXDomain, setLocalXDomain] = useState<[string, string]>([String(xAxisDomain[0] ?? ''), String(xAxisDomain[1] ?? '')]);
+  const [localYDomain, setLocalYDomain] = useState<[string, string]>([String(yAxisDomain[0] ?? ''), String(yAxisDomain[1] ?? '')]);
+
+  useEffect(() => {
+    setLocalXDomain([String(xAxisDomain[0] ?? ''), String(xAxisDomain[1] ?? '')]);
+    setLocalYDomain([String(yAxisDomain[0] ?? ''), String(yAxisDomain[1] ?? '')]);
+  }, [xAxisDomain, yAxisDomain]);
+
+  const handleDomainChange = (axis: 'x' | 'y', limit: 'min' | 'max', value: string) => {
+    if (axis === 'x') {
+        const newDomain = [...localXDomain] as [string, string];
+        newDomain[limit === 'min' ? 0 : 1] = value;
+        setLocalXDomain(newDomain);
+    } else {
+        const newDomain = [...localYDomain] as [string, string];
+        newDomain[limit === 'min' ? 0 : 1] = value;
+        setLocalYDomain(newDomain);
+    }
+  };
+
+  const handleDomainBlur = () => {
+    const parse = (val: string) => val.trim() === 'auto' || val.trim() === '' ? 'auto' : parseFloat(val);
+    
+    const finalXMin = parse(localXDomain[0]);
+    const finalXMax = parse(localXDomain[1]);
+    const finalYMin = parse(localYDomain[0]);
+    const finalYMax = parse(localYDomain[1]);
+
+    const isValidX = typeof finalXMin !== 'number' || typeof finalXMax !== 'number' || finalXMin < finalXMax;
+    const isValidY = typeof finalYMin !== 'number' || typeof finalYMax !== 'number' || finalYMin < finalYMax;
+    
+    updateFileState({
+      uiState: {
+        ...uiState,
+        xAxisDomain: isValidX ? [finalXMin, finalXMax] : xAxisDomain,
+        yAxisDomain: isValidY ? [finalYMin, finalYMax] : yAxisDomain
+      }
+    });
+  };
+
+  const updateExportConfig = (updates: Partial<ExportConfig>) => {
     updateFileState({ uiState: { ...uiState, exportConfig: {...exportConfig, ...updates}}});
   }
 
@@ -110,8 +151,6 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
       const container = props.plotContainerRef.current;
       if (!container) return null;
       const surfaces = Array.from(container.querySelectorAll('svg.recharts-surface')) as SVGSVGElement[];
-      // The main chart's SVG is inside a .recharts-wrapper, but crucially not inside a
-      // .recharts-legend-wrapper. This prevents exporting a legend icon by mistake.
       return surfaces.find(surface =>
         surface.closest('.recharts-wrapper') &&
         !surface.closest('.recharts-legend-wrapper')
@@ -123,44 +162,33 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
     }
 
     const { width, height, dpi, format, fileName, fontFamily, fontSize, title, xAxisLabel, yAxisLabel } = exportConfig;
-
-    // 1. Clone the SVG element
     const svgClone = svgElement.cloneNode(true) as SVGSVGElement;
-
-    // 2. Set explicit dimensions and namespace for export
     svgClone.setAttribute('width', `${width}`);
     svgClone.setAttribute('height', `${height}`);
     svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-
-    // 3. Add a background rectangle as the first rendered element
     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     rect.setAttribute('width', '100%');
     rect.setAttribute('height', '100%');
-    const bgColor = theme === 'dark' ? '#282c34' : '#ffffff'; // from tailwind config
+    const bgColor = theme === 'dark' ? '#282c34' : '#ffffff';
     rect.setAttribute('fill', bgColor);
     svgClone.insertBefore(rect, svgClone.firstChild);
-
-    // 4. Update fonts, titles, and labels
     const allTextElements = svgClone.querySelectorAll('text');
     allTextElements.forEach(t => {
         t.setAttribute('font-family', fontFamily);
         t.setAttribute('font-size', `${fontSize}px`);
     });
-
     const findAxisLabel = (axisClass: string) => {
         const labels = svgClone.querySelectorAll(`.${axisClass} .recharts-label text`);
         return labels.length > 0 ? labels[labels.length - 1] : null;
     };
     const xAxisLabelEl = findAxisLabel('recharts-xaxis');
     if (xAxisLabelEl) xAxisLabelEl.textContent = xAxisLabel;
-
     const yAxisLabelEl = findAxisLabel('recharts-yaxis');
     if (yAxisLabelEl) yAxisLabelEl.textContent = yAxisLabel;
-    
     if (title) {
         const titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         titleEl.setAttribute('x', `${width / 2}`);
-        titleEl.setAttribute('y', '30'); // Add some padding from the top
+        titleEl.setAttribute('y', '30');
         titleEl.setAttribute('text-anchor', 'middle');
         titleEl.setAttribute('font-size', `${fontSize * 1.5}px`);
         titleEl.setAttribute('font-family', fontFamily);
@@ -169,23 +197,15 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
         titleEl.textContent = title;
         svgClone.appendChild(titleEl);
     }
-    
-    // 5. Serialize and trigger download
     const svgString = new XMLSerializer().serializeToString(svgClone);
-    
     if (format === 'svg') {
       const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
       triggerDownload(dataUrl, `${fileName}.svg`);
-    } else { // PNG
+    } else {
       const image = new Image();
       const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
       const objectUrl = URL.createObjectURL(svgBlob);
-
-      // It's crucial to revoke the object URL when we're done to avoid memory leaks
-      const cleanup = () => {
-        URL.revokeObjectURL(objectUrl);
-      };
-
+      const cleanup = () => URL.revokeObjectURL(objectUrl);
       image.onload = () => {
         const canvas = document.createElement('canvas');
         const scale = dpi / 96;
@@ -197,20 +217,16 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
             cleanup();
             return;
         }
-        
         ctx.scale(scale, scale);
         ctx.drawImage(image, 0, 0, width, height);
-        
         const pngUrl = canvas.toDataURL('image/png');
         triggerDownload(pngUrl, `${fileName}.png`);
         cleanup();
       };
-
       image.onerror = (err) => { 
-        console.error("SVG to PNG conversion failed. The browser could not load the generated SVG image.", err);
+        console.error("SVG to PNG conversion failed.", err);
         cleanup();
       };
-      
       image.src = objectUrl;
     }
   }
@@ -222,10 +238,16 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
         </div>
         <div className="flex-shrink-0 border-b border-border dark:border-dark-border px-2">
             <button
-                onClick={() => setActiveTab('style')}
-                className={`px-3 py-2 text-sm font-medium focus:outline-none -mb-px ${activePlotExplorerTab === 'style' ? 'border-b-2 border-accent text-accent' : 'text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-t-md'}`}
+                onClick={() => setActiveTab('series')}
+                className={`px-3 py-2 text-sm font-medium focus:outline-none -mb-px ${activePlotExplorerTab === 'series' ? 'border-b-2 border-accent text-accent' : 'text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-t-md'}`}
             >
-                {t('plot_explorer.tab_style')}
+                {t('plot_explorer.tab_series')}
+            </button>
+            <button
+                onClick={() => setActiveTab('plot')}
+                className={`px-3 py-2 text-sm font-medium focus:outline-none -mb-px ${activePlotExplorerTab === 'plot' ? 'border-b-2 border-accent text-accent' : 'text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-t-md'}`}
+            >
+                {t('plot_explorer.tab_plot')}
             </button>
             <button
                 onClick={() => setActiveTab('export')}
@@ -235,7 +257,7 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
             </button>
         </div>
         <div className="flex-grow overflow-y-auto">
-            {activePlotExplorerTab === 'style' && (
+            {activePlotExplorerTab === 'series' && (
               <>
                 <Section title={t('plot_explorer.scatter')} defaultOpen>
                     <Toggle label={t('analysis.show_observations')} checked={props.showObservations} onChange={props.onToggleObservations} />
@@ -287,10 +309,47 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
                         </select>
                     </ControlWrapper>
                 </Section>
-                <Section title={t('plot_explorer.general')}>
-                    <Toggle label={t('analysis.show_grid')} checked={props.showGrid} onChange={props.onToggleGrid} />
-                </Section>
               </>
+            )}
+            {activePlotExplorerTab === 'plot' && (
+                <>
+                    <Section title={t('plot_explorer.general')} defaultOpen>
+                        <Toggle label={t('analysis.show_grid')} checked={props.showGrid} onChange={props.onToggleGrid} />
+                        <Toggle label={t('plot_explorer.show_legend')} checked={exportConfig.showLegend} onChange={c => updateExportConfig({ showLegend: c })} />
+                        <Toggle label={t('plot_explorer.show_title')} checked={exportConfig.showTitle} onChange={c => updateExportConfig({ showTitle: c })} />
+                    </Section>
+                    <Section title={t('plot_explorer.axes_domain')} defaultOpen>
+                        <div className="grid grid-cols-2 gap-2">
+                            <LabeledInput label={t('plot_explorer.x_min')}>
+                                <input type="text" value={localXDomain[0]} onChange={e => handleDomainChange('x', 'min', e.target.value)} onBlur={handleDomainBlur} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+                            </LabeledInput>
+                            <LabeledInput label={t('plot_explorer.x_max')}>
+                                <input type="text" value={localXDomain[1]} onChange={e => handleDomainChange('x', 'max', e.target.value)} onBlur={handleDomainBlur} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+                            </LabeledInput>
+                            <LabeledInput label={t('plot_explorer.y_min')}>
+                                <input type="text" value={localYDomain[0]} onChange={e => handleDomainChange('y', 'min', e.target.value)} onBlur={handleDomainBlur} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+                            </LabeledInput>
+                             <LabeledInput label={t('plot_explorer.y_max')}>
+                                <input type="text" value={localYDomain[1]} onChange={e => handleDomainChange('y', 'max', e.target.value)} onBlur={handleDomainBlur} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+                            </LabeledInput>
+                        </div>
+                    </Section>
+                    <Section title={t('plot_explorer.tick_formatting')}>
+                        <div className="flex items-center space-x-2">
+                          <label htmlFor="sigfig-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('plot_explorer.sig_figs')}:</label>
+                          <input
+                              id="sigfig-slider"
+                              type="range"
+                              min="1"
+                              max="8"
+                              value={tickSigFigs}
+                              onChange={(e) => updateFileState({ uiState: { ...uiState, tickSigFigs: Number(e.target.value) }})}
+                              className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                          />
+                          <span className="text-sm font-mono w-4 text-right">{tickSigFigs}</span>
+                        </div>
+                    </Section>
+                </>
             )}
             {activePlotExplorerTab === 'export' && (
                 <div className="p-2 space-y-4">

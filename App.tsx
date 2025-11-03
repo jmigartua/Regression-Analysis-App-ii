@@ -94,7 +94,8 @@ export default function App() {
           activePlotTool: null,
           xAxisDomain: getPaddedDomain(parsedData, parsedColumns[0]),
           yAxisDomain: getPaddedDomain(parsedData, parsedColumns[1]),
-          activePlotExplorerTab: 'style',
+          tickSigFigs: 4,
+          activePlotExplorerTab: 'series',
           exportConfig: {
             fileName: selectedFile.name.replace(/\.[^/.]+$/, "") + '_plot',
             format: 'png',
@@ -108,6 +109,7 @@ export default function App() {
             fontSize: 16,
             theme: 'current',
             showLegend: true,
+            showTitle: true,
           }
         }
       };
