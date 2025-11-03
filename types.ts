@@ -41,8 +41,8 @@ export interface UIState {
   activePlotTool: 'pan' | 'select' | null;
   xAxisDomain: [any, any];
   yAxisDomain: [any, any];
-  xAxisSigFigs: number;
-  yAxisSigFigs: number;
+  xAxisDecimals: number;
+  yAxisDecimals: number;
   xAxisLabel: string;
   yAxisLabel: string;
 

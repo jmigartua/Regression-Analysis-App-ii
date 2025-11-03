@@ -99,7 +99,7 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
   if (!fileState) return null;
 
   const { uiState } = fileState;
-  const { activePlotExplorerTab, exportConfig, xAxisDomain, yAxisDomain, xAxisSigFigs, yAxisSigFigs, xAxisLabel, yAxisLabel } = uiState;
+  const { activePlotExplorerTab, exportConfig, xAxisDomain, yAxisDomain, xAxisDecimals, yAxisDecimals, xAxisLabel, yAxisLabel } = uiState;
   const setActiveTab = (tab: UIState['activePlotExplorerTab']) => updateFileState({ uiState: { ...uiState, activePlotExplorerTab: tab }});
 
   const [localXDomain, setLocalXDomain] = useState<[string, string]>([String(xAxisDomain[0] ?? ''), String(xAxisDomain[1] ?? '')]);
@@ -349,30 +349,30 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
                     <Section title={t('plot_explorer.tick_formatting')}>
                         <div className="space-y-3">
                             <div className="flex items-center space-x-2">
-                              <label htmlFor="x-sigfig-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('plot_explorer.x_sig_figs')}:</label>
+                              <label htmlFor="x-decimals-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('plot_explorer.x_decimals')}:</label>
                               <input
-                                  id="x-sigfig-slider"
+                                  id="x-decimals-slider"
                                   type="range"
-                                  min="1"
+                                  min="0"
                                   max="8"
-                                  value={xAxisSigFigs}
-                                  onChange={(e) => updateUiState({ xAxisSigFigs: Number(e.target.value) })}
+                                  value={xAxisDecimals}
+                                  onChange={(e) => updateUiState({ xAxisDecimals: Number(e.target.value) })}
                                   className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
                               />
-                              <span className="text-sm font-mono w-4 text-right">{xAxisSigFigs}</span>
+                              <span className="text-sm font-mono w-4 text-right">{xAxisDecimals}</span>
                             </div>
                              <div className="flex items-center space-x-2">
-                              <label htmlFor="y-sigfig-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('plot_explorer.y_sig_figs')}:</label>
+                              <label htmlFor="y-decimals-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('plot_explorer.y_decimals')}:</label>
                               <input
-                                  id="y-sigfig-slider"
+                                  id="y-decimals-slider"
                                   type="range"
-                                  min="1"
+                                  min="0"
                                   max="8"
-                                  value={yAxisSigFigs}
-                                  onChange={(e) => updateUiState({ yAxisSigFigs: Number(e.target.value) })}
+                                  value={yAxisDecimals}
+                                  onChange={(e) => updateUiState({ yAxisDecimals: Number(e.target.value) })}
                                   className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
                               />
-                              <span className="text-sm font-mono w-4 text-right">{yAxisSigFigs}</span>
+                              <span className="text-sm font-mono w-4 text-right">{yAxisDecimals}</span>
                             </div>
                         </div>
                     </Section>

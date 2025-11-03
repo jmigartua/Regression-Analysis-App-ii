@@ -45,25 +45,25 @@ interface PlotPanelProps {
   showLegend: boolean;
   showTitle: boolean;
   title: string;
-  xAxisSigFigs: number;
-  yAxisSigFigs: number;
+  xAxisDecimals: number;
+  yAxisDecimals: number;
   xAxisLabel: string;
   yAxisLabel: string;
 }
 
-const CustomTooltip: React.FC<{ active?: boolean; payload?: any[], xSigFigs: number, ySigFigs: number }> = ({ active, payload, xSigFigs, ySigFigs }) => {
-  const formatTick = (value: any, sigFigs: number): string => {
+const CustomTooltip: React.FC<{ active?: boolean; payload?: any[], xDecimals: number, yDecimals: number }> = ({ active, payload, xDecimals, yDecimals }) => {
+  const formatValue = (value: any, decimals: number): string => {
     if (typeof value !== 'number' || !isFinite(value)) {
         return String(value);
     }
-    return Number(value.toPrecision(sigFigs)).toString();
+    return value.toFixed(decimals);
   };
 
   if (active && payload && payload.length) {
     return (
       <div className="bg-panel dark:bg-slate-900/80 p-3 border border-border dark:border-slate-700 rounded-md text-sm">
-        {payload[0].dataKey && <p className="label text-text-primary dark:text-white">{`${payload[0].name} : ${formatTick(payload[0].value, xSigFigs)}`}</p>}
-        {payload[1]?.dataKey && <p className="label text-text-primary dark:text-white">{`${payload[1].name} : ${formatTick(payload[1].value, ySigFigs)}`}</p>}
+        {payload[0].dataKey && <p className="label text-text-primary dark:text-white">{`${payload[0].name} : ${formatValue(payload[0].value, xDecimals)}`}</p>}
+        {payload[1]?.dataKey && <p className="label text-text-primary dark:text-white">{`${payload[1].name} : ${formatValue(payload[1].value, yDecimals)}`}</p>}
       </div>
     );
   }
@@ -102,7 +102,7 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({
     scatterColor, scatterOpacity, scatterSize,
     lineColor, lineOpacity, lineWidth, lineStyle,
     residualsColor, residualsOpacity, residualsWidth, residualsStyle,
-    showLegend, showTitle, title, xAxisSigFigs, yAxisSigFigs, xAxisLabel, yAxisLabel
+    showLegend, showTitle, title, xAxisDecimals, yAxisDecimals, xAxisLabel, yAxisLabel
 }) => {
     const { t, theme } = useAppContext();
     const [refArea, setRefArea] = useState<{ x1?: number, y1?: number, x2?: number, y2?: number }>({});
@@ -113,12 +113,12 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({
     
     const formatXTick = (tick: any): string => {
         if (typeof tick !== 'number' || !isFinite(tick)) return String(tick);
-        return Number(tick.toPrecision(xAxisSigFigs)).toString();
+        return tick.toFixed(xAxisDecimals);
     };
     
     const formatYTick = (tick: any): string => {
         if (typeof tick !== 'number' || !isFinite(tick)) return String(tick);
-        return Number(tick.toPrecision(yAxisSigFigs)).toString();
+        return tick.toFixed(yAxisDecimals);
     };
 
     const handleMouseDown = (e: any) => {
@@ -195,7 +195,7 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({
             <div className="flex-grow">
                 <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart 
-                        margin={{ top: 5, right: 30, bottom: 25, left: 30 }}
+                        margin={{ top: 5, right: 30, bottom: 40, left: 40 }}
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
@@ -209,7 +209,7 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({
                           domain={xAxisDomain} 
                           allowDataOverflow 
                           tickFormatter={formatXTick}
-                          label={{ value: xAxisLabel, position: 'insideBottom', offset: -15 }}
+                          label={{ value: xAxisLabel, position: 'insideBottom', offset: -25 }}
                         />
                         <YAxis 
                           type="number" 
@@ -219,10 +219,10 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({
                           domain={yAxisDomain} 
                           allowDataOverflow 
                           tickFormatter={formatYTick}
-                          label={{ value: yAxisLabel, angle: -90, position: 'insideLeft', offset: -15, style: { textAnchor: 'middle' } }}
+                          label={{ value: yAxisLabel, angle: -90, position: 'insideLeft', offset: -25, style: { textAnchor: 'middle' } }}
                         />
-                        <Tooltip content={<CustomTooltip xSigFigs={xAxisSigFigs} ySigFigs={yAxisSigFigs} />} cursor={{ strokeDasharray: '3 3' }} />
-                        {showLegend && <Legend />}
+                        <Tooltip content={<CustomTooltip xDecimals={xAxisDecimals} yDecimals={yAxisDecimals} />} cursor={{ strokeDasharray: '3 3' }} />
+                        {showLegend && <Legend verticalAlign="bottom" height={36}/>}
                         
                         {showObservations && (
                             <>

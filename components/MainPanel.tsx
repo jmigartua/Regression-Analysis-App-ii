@@ -49,8 +49,8 @@ export const MainPanel: React.FC = () => {
         xAxisDomain,
         yAxisDomain,
         selectedPlotIndices,
-        xAxisSigFigs,
-        yAxisSigFigs,
+        xAxisDecimals,
+        yAxisDecimals,
         xAxisLabel,
         yAxisLabel,
         exportConfig,
@@ -239,8 +239,8 @@ export const MainPanel: React.FC = () => {
                                         yAxisDomain={yAxisDomain} setYAxisDomain={(d) => updateUiState({ yAxisDomain: d })}
                                         selectedIndices={selectedPlotIndices} setSelectedIndices={(i) => updateUiState({ selectedPlotIndices: i })}
                                         
-                                        xAxisSigFigs={xAxisSigFigs}
-                                        yAxisSigFigs={yAxisSigFigs}
+                                        xAxisDecimals={xAxisDecimals}
+                                        yAxisDecimals={yAxisDecimals}
                                         xAxisLabel={xAxisLabel}
                                         yAxisLabel={yAxisLabel}
                                         showTitle={exportConfig.showTitle}
