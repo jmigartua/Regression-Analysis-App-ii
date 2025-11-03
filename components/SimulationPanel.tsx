@@ -53,9 +53,8 @@ export const SimulationPanel: React.FC = () => {
             <div className="h-full" style={{ width: `calc(${dividerPosition}% - 3px)` }}>
                 <PlottingWorkspace
                     fileState={fileState}
-                    updateFileState={() => {}} // Read-only, so pass a no-op function
+                    updateFileState={updateFileState}
                     explorerPosition="left"
-                    isReadOnly={true}
                     forceRenderer="plotly"
                 />
             </div>
