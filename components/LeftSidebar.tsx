@@ -6,6 +6,7 @@ import { VariableSelector } from './VariableSelector';
 import { useAppContext } from '../contexts/AppContext';
 import { useFileContext } from '../contexts/FileContext';
 import type { FileState } from '../types';
+import { getPaddedDomain } from '../utils/regression';
 
 interface LeftSidebarProps {
   onFileAdd: (file: File) => void;
@@ -50,8 +51,26 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onFileAdd, onAnalysisI
     updateFileState({ isPlotted: true });
   };
   
-  const setIndependentVar = (value: string) => updateFileState({ independentVar: value });
-  const setDependentVar = (value: string) => updateFileState({ dependentVar: value });
+  const setIndependentVar = (value: string) => {
+    if (!fileState) return;
+    updateFileState({
+      independentVar: value,
+      uiState: {
+        ...fileState.uiState,
+        xAxisDomain: getPaddedDomain(fileState.data, value),
+      }
+    });
+  };
+  const setDependentVar = (value: string) => {
+    if (!fileState) return;
+    updateFileState({
+      dependentVar: value,
+      uiState: {
+        ...fileState.uiState,
+        yAxisDomain: getPaddedDomain(fileState.data, value)
+      }
+    });
+  };
 
   return (
     <aside className="h-full w-full bg-sidebar dark:bg-dark-sidebar flex-shrink-0 flex flex-col">

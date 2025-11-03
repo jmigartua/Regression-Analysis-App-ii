@@ -9,6 +9,7 @@ import { PlotToolbar } from './PlotToolbar';
 import type { DataPoint } from '../types';
 import { useAppContext } from '../contexts/AppContext';
 import { useFileContext } from '../contexts/FileContext';
+import { getPaddedDomain } from '../utils/regression';
 
 const PlotPlaceholder: React.FC = () => {
     const { t } = useAppContext();
@@ -91,11 +92,11 @@ export const MainPanel: React.FC = () => {
 
     const handleResetView = useCallback(() => {
         updateUiState({
-            xAxisDomain: ['dataMin', 'dataMax'],
-            yAxisDomain: ['dataMin', 'dataMax'],
+            xAxisDomain: getPaddedDomain(data, independentVar),
+            yAxisDomain: getPaddedDomain(data, dependentVar),
             activePlotTool: null
         });
-    }, [updateUiState]);
+    }, [updateUiState, data, independentVar, dependentVar]);
 
     const handleClearSelection = useCallback(() => {
         updateUiState({ selectedPlotIndices: new Set() });

@@ -1,7 +1,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { AlertTriangle, X, LayoutGrid } from 'lucide-react';
-import { calculateLinearRegression } from './utils/regression';
+import { calculateLinearRegression, getPaddedDomain } from './utils/regression';
 import type { AnalysisResult, DataPoint, FileState } from './types';
 import { parseCSV, fileToText } from './utils/csvParser';
 import { FileContextProvider } from './contexts/FileContext';
@@ -92,8 +92,8 @@ export default function App() {
           topPanelHeight: 60,
           selectedPlotIndices: new Set(),
           activePlotTool: null,
-          xAxisDomain: ['dataMin', 'dataMax'],
-          yAxisDomain: ['dataMin', 'dataMax'],
+          xAxisDomain: getPaddedDomain(parsedData, parsedColumns[0]),
+          yAxisDomain: getPaddedDomain(parsedData, parsedColumns[1]),
           activePlotExplorerTab: 'style',
           exportConfig: {
             fileName: selectedFile.name.replace(/\.[^/.]+$/, "") + '_plot',

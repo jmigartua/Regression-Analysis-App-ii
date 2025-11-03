@@ -104,3 +104,26 @@ export function calculateLinearRegression(
     residualPlotData
   };
 }
+
+export const getPaddedDomain = (data: DataPoint[], key: string): [any, any] => {
+    if (!key) return ['auto', 'auto'];
+    
+    const numericValues = data
+        .map(p => p[key])
+        .filter((v): v is number => typeof v === 'number' && isFinite(v));
+
+    if (numericValues.length < 1) return ['auto', 'auto'];
+
+    const min = Math.min(...numericValues);
+    const max = Math.max(...numericValues);
+
+    if (min === max) {
+        const val = min;
+        return [val - 1, val + 1];
+    }
+
+    const range = max - min;
+    const padding = range * 0.05;
+    
+    return [min - padding, max + padding];
+};
