@@ -47,7 +47,7 @@ export interface UIState {
   yAxisLabel: string;
 
   // Plot explorer state
-  activePlotExplorerTab: 'series' | 'plot' | 'export';
+  activePlotExplorerTab: 'series' | 'plot' | 'export' | 'code';
   exportConfig: ExportConfig;
 }
 

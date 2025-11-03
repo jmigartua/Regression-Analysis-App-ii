@@ -1,9 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ChevronDown, Copy } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
 import { useFileContext } from '../contexts/FileContext';
 import type { UIState, ExportConfig } from '../types';
+import { generateMatplotlibCode } from '../services/codeGenerator';
+
 
 interface PlotExplorerPanelProps {
   plotContainerRef: React.RefObject<HTMLDivElement>;
@@ -95,6 +97,7 @@ const triggerDownload = (href: string, filename: string) => {
 export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
   const { t, theme } = useAppContext();
   const { fileState, updateFileState } = useFileContext();
+  const [copyButtonText, setCopyButtonText] = useState(t('plot_explorer.copy_code'));
   
   if (!fileState) return null;
 
@@ -109,6 +112,11 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
     setLocalXDomain([String(xAxisDomain[0] ?? ''), String(xAxisDomain[1] ?? '')]);
     setLocalYDomain([String(yAxisDomain[0] ?? ''), String(yAxisDomain[1] ?? '')]);
   }, [xAxisDomain, yAxisDomain]);
+
+  const generatedCode = useMemo(() => {
+    return generateMatplotlibCode(fileState, props);
+  }, [fileState, props]);
+
 
   const handleDomainChange = (axis: 'x' | 'y', limit: 'min' | 'max', value: string) => {
     if (axis === 'x') {
@@ -149,6 +157,13 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
   const updateExportConfig = (updates: Partial<ExportConfig>) => {
     updateFileState({ uiState: { ...uiState, exportConfig: {...exportConfig, ...updates}}});
   }
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(generatedCode).then(() => {
+        setCopyButtonText(t('plot_explorer.code_copied'));
+        setTimeout(() => setCopyButtonText(t('plot_explorer.copy_code')), 2000);
+    });
+  };
 
   const handleExport = async () => {
     const svgElement = (() => {
@@ -258,6 +273,12 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
                 className={`px-3 py-2 text-sm font-medium focus:outline-none -mb-px ${activePlotExplorerTab === 'export' ? 'border-b-2 border-accent text-accent' : 'text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-t-md'}`}
             >
                 {t('plot_explorer.tab_export')}
+            </button>
+            <button
+                onClick={() => setActiveTab('code')}
+                className={`px-3 py-2 text-sm font-medium focus:outline-none -mb-px ${activePlotExplorerTab === 'code' ? 'border-b-2 border-accent text-accent' : 'text-text-secondary dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-t-md'}`}
+            >
+                {t('plot_explorer.tab_code')}
             </button>
         </div>
         <div className="flex-grow overflow-y-auto">
@@ -439,6 +460,25 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
                     </button>
                   </div>
                 </div>
+            )}
+            {activePlotExplorerTab === 'code' && (
+              <div className="p-3 h-full flex flex-col">
+                <div className="flex-grow relative">
+                  <textarea
+                    readOnly
+                    value={generatedCode}
+                    className="w-full h-full p-2 font-mono text-xs bg-bg-default dark:bg-dark-bg border border-border dark:border-dark-border rounded-md resize-none"
+                    aria-label="Generated Python Plot Code"
+                  />
+                  <button 
+                    onClick={handleCopyCode}
+                    className="absolute top-2 right-2 flex items-center px-2 py-1 bg-sidebar dark:bg-dark-sidebar border border-border dark:border-dark-border rounded-md text-xs hover:bg-black/5 dark:hover:bg-white/10"
+                  >
+                    <Copy className="w-3.5 h-3.5 mr-1.5" />
+                    {copyButtonText}
+                  </button>
+                </div>
+              </div>
             )}
         </div>
     </div>
