@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useCallback, useContext } from 'react';
 
 type Theme = 'light' | 'dark';
@@ -22,9 +23,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const loadTranslations = async () => {
         try {
             const [enRes, esRes, euRes] = await Promise.all([
-                fetch('./locales/en.json'),
-                fetch('./locales/es.json'),
-                fetch('./locales/eu.json')
+                fetch('/locales/en.json'),
+                fetch('/locales/es.json'),
+                fetch('/locales/eu.json')
             ]);
             if (!enRes.ok || !esRes.ok || !euRes.ok) {
                 throw new Error('Failed to fetch one or more translation files.');
