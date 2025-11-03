@@ -52,6 +52,7 @@ export interface UIState {
   // Plot explorer state
   activePlotExplorerTab: 'series' | 'plot' | 'export' | 'code';
   exportConfig: ExportConfig;
+  uiRevision?: number;
 }
 
 export interface FileState {

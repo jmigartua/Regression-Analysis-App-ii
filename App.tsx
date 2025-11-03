@@ -100,6 +100,7 @@ export default function App() {
           yAxisLabel: parsedColumns[1],
           activePlotRenderer: 'recharts',
           activePlotExplorerTab: 'series',
+          uiRevision: 0,
           exportConfig: {
             fileName: selectedFile.name.replace(/\.[^/.]+$/, "") + '_plot',
             format: 'png',
@@ -147,6 +148,7 @@ export default function App() {
         selectedRowIndices: new Set(parsedState.selectedRowIndices),
         uiState: {
           ...parsedState.uiState,
+          uiRevision: 0,
           selectedPlotIndices: new Set(parsedState.uiState.selectedPlotIndices),
         },
       };
@@ -164,14 +166,15 @@ export default function App() {
     if (!activeFileState) return;
 
     const { file, selectedRowIndices, uiState, ...rest } = activeFileState;
+    const { uiRevision, selectedPlotIndices, ...restUiState } = uiState;
     
     const savableState = {
       ...rest,
       fileName: file.name,
       selectedRowIndices: Array.from(selectedRowIndices),
       uiState: {
-        ...uiState,
-        selectedPlotIndices: Array.from(uiState.selectedPlotIndices),
+        ...restUiState,
+        selectedPlotIndices: Array.from(selectedPlotIndices),
       },
     };
 
@@ -222,9 +225,13 @@ export default function App() {
 
         const updatedFile = { ...fileToUpdate, ...updates };
         
-        if (updates.uiState) {
-            updatedFile.uiState = { ...fileToUpdate.uiState, ...updates.uiState };
-        }
+        // Always create a new uiState object and increment revision
+        // This ensures any state change that should trigger a plot re-render does so correctly.
+        updatedFile.uiState = { 
+            ...fileToUpdate.uiState, 
+            ...(updates.uiState || {}), // Apply new uiState updates if they exist
+            uiRevision: (fileToUpdate.uiState.uiRevision || 0) + 1 
+        };
         
         return { ...currentFiles, [fileId]: updatedFile };
     });
@@ -271,7 +278,7 @@ export default function App() {
         updateFileState(activeFileId, { analysisResult: null });
       }
     }
-  }, [activeData, activeFileState, activeFileId, t, updateFileState]);
+  }, [activeData, activeFileState?.isPlotted, activeFileState?.independentVar, activeFileState?.dependentVar, activeFileId, t, updateFileState]);
 
   const tableData = useMemo(() => {
     if (!activeFileState) return [];
@@ -305,17 +312,18 @@ export default function App() {
   }, [activeFileState]);
 
   const handleCellChange = (rowIndex: number, column: string, value: any) => {
-    if (!activeFileState) return;
+    if (!activeFileId || !activeFileState) return;
     const newData = [...activeFileState.data];
     newData[rowIndex] = { ...newData[rowIndex], [column]: value };
     updateFileState(activeFileId, { data: newData });
   };
 
   const handleDeleteSelectedRows = () => {
-    if (!activeFileState || activeFileState.selectedRowIndices.size === 0) return;
+    if (!activeFileId || !activeFileState || activeFileState.selectedRowIndices.size === 0) return;
     const indicesToDelete = Array.from(activeFileState.selectedRowIndices).sort((a: number, b: number) => b - a);
     const newData = activeFileState.data.filter((_, index) => !activeFileState.selectedRowIndices.has(index));
-    updateFileState(activeFileId, { data: newData, selectedRowIndices: new Set() });
+    const newSelectedIndices = new Set<number>();
+    updateFileState(activeFileId, { data: newData, selectedRowIndices: newSelectedIndices });
   };
   
   // Create other handlers that use `updateFileState`...

@@ -10,7 +10,6 @@ import { useAppContext } from '../contexts/AppContext';
 interface PlotlyPanelProps {
   data: DataPoint[];
   residualsData: DataPoint[];
-  inactiveData: DataPoint[];
   activeData: DataPoint[];
   independentVar: string;
   dependentVar: string;
@@ -23,6 +22,8 @@ interface PlotlyPanelProps {
   setYAxisDomain: (domain: [any, any]) => void;
   onAnalysisSelectionChange: (indices: Set<number>) => void;
   totalDataPoints: number;
+  selectedRowIndices: Set<number>;
+  uiRevision?: number;
 
   // Style props
   showGrid: boolean;
@@ -58,8 +59,9 @@ const getDashStyle = (style: string) => {
 
 export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
     const { 
-        data, inactiveData, activeData, independentVar, dependentVar, analysisResult,
-        xAxisDomain, setXAxisDomain, yAxisDomain, setYAxisDomain, onAnalysisSelectionChange, totalDataPoints,
+        data, activeData, independentVar, dependentVar, analysisResult,
+        xAxisDomain, setXAxisDomain, yAxisDomain, setYAxisDomain, onAnalysisSelectionChange, totalDataPoints, selectedRowIndices,
+        uiRevision,
         showGrid,
         showObservations, showLine, showResiduals,
         scatterColor, scatterOpacity, scatterSize,
@@ -69,30 +71,37 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
     } = props;
     
     const { t, theme } = useAppContext();
-    const dataPointToOriginalIndex = useMemo(() => new Map(data.map((d, i) => [d, i])), [data]);
 
     const traces = useMemo<Data[]>(() => {
         const generatedTraces: Data[] = [];
 
         if (showObservations) {
+            const selectedPointIndices: number[] = [];
+            selectedRowIndices.forEach(index => {
+                if(index < data.length) {
+                    selectedPointIndices.push(index);
+                }
+            });
+
              generatedTraces.push({
                 type: 'scatter',
                 mode: 'markers',
-                x: inactiveData.map(d => d[independentVar]),
-                y: inactiveData.map(d => d[dependentVar]),
-                name: 'Inactive',
-                showlegend: false,
-                marker: { color: '#9ca3af', opacity: 0.3, size: scatterSize / 4 },
-                hoverinfo: 'none',
-            });
-            generatedTraces.push({
-                type: 'scatter',
-                mode: 'markers',
-                x: activeData.map(d => d[independentVar]),
-                y: activeData.map(d => d[dependentVar]),
+                x: data.map(d => d[independentVar]),
+                y: data.map(d => d[dependentVar]),
                 name: t('plot.observations'),
-                customdata: activeData.map(d => dataPointToOriginalIndex.get(d)),
-                marker: { color: scatterColor, opacity: scatterOpacity, size: scatterSize / 4 },
+                customdata: data.map((d, i) => i),
+                selectedpoints: selectedPointIndices,
+                marker: {
+                    color: scatterColor,
+                    opacity: scatterOpacity,
+                    size: scatterSize / 4
+                },
+                selected: {
+                    marker: { opacity: 1.0 }
+                },
+                unselected: {
+                    marker: { opacity: 0.3, color: '#9ca3af' }
+                }
             });
         }
 
@@ -113,8 +122,8 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
         }
         return generatedTraces;
     }, [
-        inactiveData, activeData, independentVar, dependentVar, analysisResult, showObservations, showLine,
-        scatterColor, scatterOpacity, scatterSize, lineColor, lineOpacity, lineWidth, lineStyle, t, dataPointToOriginalIndex
+        data, selectedRowIndices, independentVar, dependentVar, analysisResult, showObservations, showLine,
+        scatterColor, scatterOpacity, scatterSize, lineColor, lineOpacity, lineWidth, lineStyle, t
     ]);
 
     const layout = useMemo<Partial<Layout>>(() => {
@@ -137,6 +146,7 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
         }) : [];
 
         return {
+            uirevision: uiRevision,
             title: showTitle ? { text: title, font: { color: isDark ? '#e5e7eb' : '#1f2937' } } : undefined,
             xaxis: {
                 title: { text: xAxisLabel },
@@ -166,10 +176,12 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
             plot_bgcolor: isDark ? '#282c34' : '#ffffff',
             margin: { l: 60, r: 20, t: showTitle ? 40 : 20, b: 50 },
             shapes,
+            dragmode: 'lasso', // Or 'select' for box selection. Lets Plotly toolbar control this.
         };
     }, [
         theme, title, showTitle, xAxisLabel, yAxisLabel, xAxisDomain, yAxisDomain, showLegend, showGrid,
-        showResiduals, analysisResult, props.residualsData, independentVar, residualsColor, residualsWidth, residualsStyle, residualsOpacity
+        showResiduals, analysisResult, props.residualsData, independentVar, residualsColor, residualsWidth, residualsStyle, residualsOpacity,
+        uiRevision
     ]);
     
     const handleRelayout = useCallback((eventData: any) => {
@@ -185,9 +197,15 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
                 setYAxisDomain(newYDomain);
             }
         }
+        if (eventData['xaxis.autorange']) {
+            // TODO: This event doesn't give the new range. We might need a different approach if we want to sync autorange back to state.
+        }
     }, [xAxisDomain, yAxisDomain, setXAxisDomain, setYAxisDomain]);
 
     const handleSelection = useCallback((eventData: any) => {
+        // This handler is now specifically for when a selection is actively made.
+        // It ignores empty selection events which Plotly can fire on mouse-up,
+        // preventing the analysis from incorrectly resetting to all data points.
         if (eventData && eventData.points && eventData.points.length > 0) {
             const newSelectedIndices = new Set<number>();
             eventData.points.forEach((point: any) => {
@@ -196,12 +214,16 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
                 }
             });
             onAnalysisSelectionChange(newSelectedIndices);
-        } else {
-            // Selection was cleared (e.g., double-click), so select all points.
-            const allIndices = new Set(Array.from({ length: totalDataPoints }, (_, i) => i));
-            onAnalysisSelectionChange(allIndices);
         }
+    }, [onAnalysisSelectionChange]);
+
+    const handleDeselect = useCallback(() => {
+        // This handler is for when the user actively clears a selection (e.g., by double-clicking).
+        // In this case, we want to revert the analysis to include all data points.
+        const allIndices = new Set(Array.from({ length: totalDataPoints }, (_, i) => i));
+        onAnalysisSelectionChange(allIndices);
     }, [totalDataPoints, onAnalysisSelectionChange]);
+
 
     return (
         <Plot
@@ -212,6 +234,7 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
             config={{ responsive: true, displaylogo: false }}
             onRelayout={handleRelayout}
             onSelected={handleSelection}
+            onDeselect={handleDeselect}
         />
     );
 };

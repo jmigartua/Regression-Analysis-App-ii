@@ -111,7 +111,7 @@ export const MainPanel: React.FC = () => {
 
     const handleClearSelection = useCallback(() => {
         updateUiState({ selectedPlotIndices: new Set() });
-    }, [updateUiState]);
+    }, [updateFileState]);
 
     const handleMouseDownTableResizer = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
@@ -279,7 +279,6 @@ export const MainPanel: React.FC = () => {
                                         <PlotlyPanel
                                             data={data}
                                             residualsData={activePlotData}
-                                            inactiveData={inactiveData}
                                             activeData={activePlotData}
                                             analysisResult={analysisResult}
                                             independentVar={independentVar}
@@ -287,9 +286,11 @@ export const MainPanel: React.FC = () => {
                                             
                                             onAnalysisSelectionChange={(newIndices: Set<number>) => updateFileState({ selectedRowIndices: newIndices })}
                                             totalDataPoints={data.length}
+                                            selectedRowIndices={selectedRowIndices}
                                             
                                             xAxisDomain={xAxisDomain} setXAxisDomain={(d) => updateUiState({ xAxisDomain: d })}
                                             yAxisDomain={yAxisDomain} setYAxisDomain={(d) => updateUiState({ yAxisDomain: d })}
+                                            uiRevision={uiState.uiRevision}
                                             
                                             xAxisLabel={xAxisLabel}
                                             yAxisLabel={yAxisLabel}
