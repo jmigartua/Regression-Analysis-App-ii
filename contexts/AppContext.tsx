@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useCallback, useContext } from 'react';
 
 type Theme = 'light' | 'dark';
