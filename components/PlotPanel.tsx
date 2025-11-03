@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, ReferenceArea } from 'recharts';
 import type { DataPoint, AnalysisResult } from '../types';
@@ -44,12 +43,21 @@ interface PlotPanelProps {
   residualsStyle: string;
 }
 
+const formatTick = (tick: any): string => {
+    if (typeof tick !== 'number' || !isFinite(tick)) {
+        return String(tick);
+    }
+    // Use toPrecision for significant figures, then convert to Number to remove trailing zeros,
+    // then to string for display. This handles various scales gracefully.
+    return Number(tick.toPrecision(4)).toString();
+};
+
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-panel dark:bg-slate-900/80 p-3 border border-border dark:border-slate-700 rounded-md text-sm">
-        {payload[0].dataKey && <p className="label text-text-primary dark:text-white">{`${payload[0].name} : ${payload[0].value}`}</p>}
-        {payload[1]?.dataKey && <p className="label text-text-primary dark:text-white">{`${payload[1].name} : ${payload[1].value}`}</p>}
+        {payload[0].dataKey && <p className="label text-text-primary dark:text-white">{`${payload[0].name} : ${formatTick(payload[0].value)}`}</p>}
+        {payload[1]?.dataKey && <p className="label text-text-primary dark:text-white">{`${payload[1].name} : ${formatTick(payload[1].value)}`}</p>}
       </div>
     );
   }
@@ -174,8 +182,8 @@ export const PlotPanel: React.FC<PlotPanelProps> = ({
                     onMouseUp={handleMouseUp}
                 >
                     {showGrid && <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />}
-                    <XAxis type="number" dataKey={independentVar} name={independentVar} unit="" stroke={tickColor} domain={xAxisDomain} allowDataOverflow />
-                    <YAxis type="number" dataKey={dependentVar} name={dependentVar} unit="" stroke={tickColor} domain={yAxisDomain} allowDataOverflow/>
+                    <XAxis type="number" dataKey={independentVar} name={independentVar} unit="" stroke={tickColor} domain={xAxisDomain} allowDataOverflow tickFormatter={formatTick} />
+                    <YAxis type="number" dataKey={dependentVar} name={dependentVar} unit="" stroke={tickColor} domain={yAxisDomain} allowDataOverflow tickFormatter={formatTick}/>
                     <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
                     <Legend />
                     
