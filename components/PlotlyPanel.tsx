@@ -129,22 +129,40 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
 
     const layout = useMemo<Partial<Layout>>(() => {
         const isDark = theme === 'dark';
-        const shapes = showResiduals && analysisResult ? props.residualsData.map(d => {
-            const predictedY = analysisResult.intercept + analysisResult.slope * d[independentVar];
-            return {
-                type: 'line' as const,
-                x0: d[independentVar],
-                y0: d[dependentVar],
-                x1: d[independentVar],
-                y1: predictedY,
-                line: {
-                    color: residualsColor,
-                    width: residualsWidth,
-                    dash: getDashStyle(residualsStyle),
-                },
-                opacity: residualsOpacity,
-            }
-        }) : [];
+        
+        const shapes = (showResiduals && analysisResult && typeof analysisResult.slope === 'number' && typeof analysisResult.intercept === 'number')
+            ? props.residualsData
+                .map(d => {
+                    const xVal = d[independentVar];
+                    const yVal = d[dependentVar];
+
+                    if (typeof xVal !== 'number' || !isFinite(xVal) || typeof yVal !== 'number' || !isFinite(yVal)) {
+                        return null;
+                    }
+
+                    const predictedY = analysisResult.intercept + analysisResult.slope * xVal;
+
+                    if (!isFinite(predictedY)) {
+                        return null;
+                    }
+
+                    return {
+                        type: 'line' as const,
+                        x0: xVal,
+                        y0: yVal,
+                        x1: xVal,
+                        y1: predictedY,
+                        line: {
+                            color: residualsColor,
+                            width: residualsWidth,
+                            dash: getDashStyle(residualsStyle),
+                        },
+                        opacity: residualsOpacity,
+                    };
+                })
+                .filter((shape): shape is NonNullable<typeof shape> => shape !== null)
+            : [];
+
 
         return {
             uirevision: uiRevision,
@@ -181,7 +199,7 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
         };
     }, [
         theme, title, showTitle, xAxisLabel, yAxisLabel, xAxisDomain, yAxisDomain, showLegend, showGrid,
-        showResiduals, analysisResult, props.residualsData, independentVar, residualsColor, residualsWidth, residualsStyle, residualsOpacity,
+        showResiduals, analysisResult, props.residualsData, independentVar, dependentVar, residualsColor, residualsWidth, residualsStyle, residualsOpacity,
         uiRevision
     ]);
     
