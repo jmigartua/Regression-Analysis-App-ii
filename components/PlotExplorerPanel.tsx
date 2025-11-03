@@ -174,11 +174,10 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
     const svgElement = (() => {
       const container = props.plotContainerRef.current;
       if (!container) return null;
-      const surfaces = Array.from(container.querySelectorAll('svg.recharts-surface')) as SVGSVGElement[];
-      return surfaces.find(surface =>
-        surface.closest('.recharts-wrapper') &&
-        !surface.closest('.recharts-legend-wrapper')
-      ) ?? null;
+      // This selector is more specific and robust. It looks for the SVG that is a direct
+      // child of the .recharts-wrapper, which is the main plot canvas.
+      const mainPlotSvg = container.querySelector('.recharts-wrapper > svg.recharts-surface');
+      return mainPlotSvg as SVGSVGElement | null;
     })();
     if (!svgElement) {
         console.error("Could not find the recharts SVG surface to export.");
