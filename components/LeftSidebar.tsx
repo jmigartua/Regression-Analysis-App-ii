@@ -58,6 +58,11 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onFileAdd, onAnalysisI
       uiState: {
         ...fileState.uiState,
         xAxisDomain: getPaddedDomain(fileState.data, value),
+        xAxisLabel: value,
+        exportConfig: {
+            ...fileState.uiState.exportConfig,
+            xAxisLabel: value,
+        }
       }
     });
   };
@@ -67,7 +72,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onFileAdd, onAnalysisI
       dependentVar: value,
       uiState: {
         ...fileState.uiState,
-        yAxisDomain: getPaddedDomain(fileState.data, value)
+        yAxisDomain: getPaddedDomain(fileState.data, value),
+        yAxisLabel: value,
+        exportConfig: {
+            ...fileState.uiState.exportConfig,
+            yAxisLabel: value,
+        }
       }
     });
   };

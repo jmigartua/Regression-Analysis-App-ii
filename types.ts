@@ -41,7 +41,10 @@ export interface UIState {
   activePlotTool: 'pan' | 'select' | null;
   xAxisDomain: [any, any];
   yAxisDomain: [any, any];
-  tickSigFigs: number;
+  xAxisSigFigs: number;
+  yAxisSigFigs: number;
+  xAxisLabel: string;
+  yAxisLabel: string;
 
   // Plot explorer state
   activePlotExplorerTab: 'series' | 'plot' | 'export';

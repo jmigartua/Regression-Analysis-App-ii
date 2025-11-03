@@ -99,7 +99,7 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
   if (!fileState) return null;
 
   const { uiState } = fileState;
-  const { activePlotExplorerTab, exportConfig, xAxisDomain, yAxisDomain, tickSigFigs } = uiState;
+  const { activePlotExplorerTab, exportConfig, xAxisDomain, yAxisDomain, xAxisSigFigs, yAxisSigFigs, xAxisLabel, yAxisLabel } = uiState;
   const setActiveTab = (tab: UIState['activePlotExplorerTab']) => updateFileState({ uiState: { ...uiState, activePlotExplorerTab: tab }});
 
   const [localXDomain, setLocalXDomain] = useState<[string, string]>([String(xAxisDomain[0] ?? ''), String(xAxisDomain[1] ?? '')]);
@@ -141,6 +141,10 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
       }
     });
   };
+
+  const updateUiState = (updates: Partial<typeof uiState>) => {
+    updateFileState({ uiState: { ...uiState, ...updates }});
+  }
 
   const updateExportConfig = (updates: Partial<ExportConfig>) => {
     updateFileState({ uiState: { ...uiState, exportConfig: {...exportConfig, ...updates}}});
@@ -334,19 +338,42 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
                             </LabeledInput>
                         </div>
                     </Section>
+                    <Section title={t('plot_explorer.axes_labels')}>
+                        <LabeledInput label={t('plot_explorer.x_axis_label')}>
+                           <input type="text" value={xAxisLabel} onChange={e => updateUiState({ xAxisLabel: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+                        </LabeledInput>
+                         <LabeledInput label={t('plot_explorer.y_axis_label')}>
+                           <input type="text" value={yAxisLabel} onChange={e => updateUiState({ yAxisLabel: e.target.value })} className="w-full bg-bg-default dark:bg-slate-700 border border-border dark:border-slate-600 text-text-primary dark:text-white rounded-md p-1 text-sm" />
+                        </LabeledInput>
+                    </Section>
                     <Section title={t('plot_explorer.tick_formatting')}>
-                        <div className="flex items-center space-x-2">
-                          <label htmlFor="sigfig-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('plot_explorer.sig_figs')}:</label>
-                          <input
-                              id="sigfig-slider"
-                              type="range"
-                              min="1"
-                              max="8"
-                              value={tickSigFigs}
-                              onChange={(e) => updateFileState({ uiState: { ...uiState, tickSigFigs: Number(e.target.value) }})}
-                              className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                          />
-                          <span className="text-sm font-mono w-4 text-right">{tickSigFigs}</span>
+                        <div className="space-y-3">
+                            <div className="flex items-center space-x-2">
+                              <label htmlFor="x-sigfig-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('plot_explorer.x_sig_figs')}:</label>
+                              <input
+                                  id="x-sigfig-slider"
+                                  type="range"
+                                  min="1"
+                                  max="8"
+                                  value={xAxisSigFigs}
+                                  onChange={(e) => updateUiState({ xAxisSigFigs: Number(e.target.value) })}
+                                  className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                              />
+                              <span className="text-sm font-mono w-4 text-right">{xAxisSigFigs}</span>
+                            </div>
+                             <div className="flex items-center space-x-2">
+                              <label htmlFor="y-sigfig-slider" className="text-sm text-text-secondary dark:text-gray-300 w-28 flex-shrink-0">{t('plot_explorer.y_sig_figs')}:</label>
+                              <input
+                                  id="y-sigfig-slider"
+                                  type="range"
+                                  min="1"
+                                  max="8"
+                                  value={yAxisSigFigs}
+                                  onChange={(e) => updateUiState({ yAxisSigFigs: Number(e.target.value) })}
+                                  className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                              />
+                              <span className="text-sm font-mono w-4 text-right">{yAxisSigFigs}</span>
+                            </div>
                         </div>
                     </Section>
                 </>

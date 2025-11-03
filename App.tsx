@@ -94,7 +94,10 @@ export default function App() {
           activePlotTool: null,
           xAxisDomain: getPaddedDomain(parsedData, parsedColumns[0]),
           yAxisDomain: getPaddedDomain(parsedData, parsedColumns[1]),
-          tickSigFigs: 4,
+          xAxisSigFigs: 4,
+          yAxisSigFigs: 4,
+          xAxisLabel: parsedColumns[0],
+          yAxisLabel: parsedColumns[1],
           activePlotExplorerTab: 'series',
           exportConfig: {
             fileName: selectedFile.name.replace(/\.[^/.]+$/, "") + '_plot',
