@@ -116,6 +116,12 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
   const generatedCode = useMemo(() => {
     return generateMatplotlibCode(fileState, props);
   }, [fileState, props]);
+  
+  const [editableCode, setEditableCode] = useState(generatedCode);
+
+  useEffect(() => {
+    setEditableCode(generatedCode);
+  }, [generatedCode]);
 
 
   const handleDomainChange = (axis: 'x' | 'y', limit: 'min' | 'max', value: string) => {
@@ -159,7 +165,7 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
   }
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(generatedCode).then(() => {
+    navigator.clipboard.writeText(editableCode).then(() => {
         setCopyButtonText(t('plot_explorer.code_copied'));
         setTimeout(() => setCopyButtonText(t('plot_explorer.copy_code')), 2000);
     });
@@ -465,8 +471,8 @@ export const PlotExplorerPanel: React.FC<PlotExplorerPanelProps> = (props) => {
               <div className="p-3 h-full flex flex-col">
                 <div className="flex-grow relative">
                   <textarea
-                    readOnly
-                    value={generatedCode}
+                    value={editableCode}
+                    onChange={(e) => setEditableCode(e.target.value)}
                     className="w-full h-full p-2 font-mono text-xs bg-bg-default dark:bg-dark-bg border border-border dark:border-dark-border rounded-md resize-none"
                     aria-label="Generated Python Plot Code"
                   />
