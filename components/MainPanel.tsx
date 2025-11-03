@@ -82,11 +82,13 @@ export const MainPanel: React.FC = () => {
     }
 
     const handleZoom = (factor: number) => {
-        if (!chartStateRef.current?.xAxisMap?.scale || !chartStateRef.current?.yAxisMap?.scale) return;
-        const { xAxisMap, yAxisMap } = chartStateRef.current;
-        const [xMin, xMax] = xAxisMap.scale.domain();
-        const [yMin, yMax] = yAxisMap.scale.domain();
-        if(typeof xMin !== 'number' || typeof xMax !== 'number' || typeof yMin !== 'number' || typeof yMax !== 'number') return;
+        // Read domain directly from state, making it library-agnostic
+        const [xMin, xMax] = xAxisDomain;
+        const [yMin, yMax] = yAxisDomain;
+
+        // Check if domain is valid for zooming
+        if (typeof xMin !== 'number' || typeof xMax !== 'number' || typeof yMin !== 'number' || typeof yMax !== 'number') return;
+        
         const xRange = xMax - xMin;
         const yRange = yMax - yMin;
         const newXRange = xRange * factor;
@@ -105,7 +107,7 @@ export const MainPanel: React.FC = () => {
             yAxisDomain: getPaddedDomain(data, dependentVar),
             activePlotTool: null
         });
-    }, [updateUiState, data, independentVar, dependentVar]);
+    }, [updateFileState, data, independentVar, dependentVar]);
 
     const handleClearSelection = useCallback(() => {
         updateUiState({ selectedPlotIndices: new Set() });
@@ -215,15 +217,17 @@ export const MainPanel: React.FC = () => {
                         <div ref={topPanelRef} className="flex" style={{ height: `${topPanelHeight}%`, minHeight: 0 }}>
                             <div className="flex-grow flex flex-col" style={{ width: `calc(100% - ${plotExplorerWidth}px - 6px)` }}>
                                  <div className="flex-shrink-0 border-b border-border dark:border-dark-border flex items-center justify-between">
-                                    <PlotToolbar 
-                                        activeTool={activePlotTool}
-                                        setActiveTool={(tool) => updateUiState({ activePlotTool: tool })}
-                                        onZoomIn={() => handleZoom(0.8)}
-                                        onZoomOut={() => handleZoom(1.2)}
-                                        onReset={handleResetView}
-                                        onClearSelection={handleClearSelection}
-                                        hasSelection={selectedPlotIndices.size > 0}
-                                    />
+                                    {activePlotRenderer === 'recharts' ? (
+                                        <PlotToolbar 
+                                            activeTool={activePlotTool}
+                                            setActiveTool={(tool) => updateUiState({ activePlotTool: tool })}
+                                            onZoomIn={() => handleZoom(0.8)}
+                                            onZoomOut={() => handleZoom(1.2)}
+                                            onReset={handleResetView}
+                                            onClearSelection={handleClearSelection}
+                                            hasSelection={selectedPlotIndices.size > 0}
+                                        />
+                                    ) : <div />}
                                      <div className="flex items-center text-xs px-2">
                                         <button onClick={() => updateUiState({ activePlotRenderer: 'recharts' })} className={`px-2 py-1 rounded-md ${activePlotRenderer === 'recharts' ? 'bg-accent/20 text-accent' : 'text-text-secondary hover:bg-black/5'}`}>{t('main.plot_tab_recharts')}</button>
                                         <button onClick={() => updateUiState({ activePlotRenderer: 'plotly' })} className={`px-2 py-1 rounded-md ${activePlotRenderer === 'plotly' ? 'bg-accent/20 text-accent' : 'text-text-secondary hover:bg-black/5'}`}>{t('main.plot_tab_plotly')}</button>

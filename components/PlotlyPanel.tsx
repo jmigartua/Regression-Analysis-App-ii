@@ -1,4 +1,5 @@
 
+
 import React, { useMemo, useCallback } from 'react';
 import Plot from 'react-plotly.js';
 import type { Data, Layout } from 'plotly.js';
@@ -155,7 +156,7 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
             title: showTitle ? { text: title, font: { color: isDark ? '#e5e7eb' : '#1f2937' } } : undefined,
             xaxis: {
                 title: { text: xAxisLabel },
-                range: xAxisDomain.includes('auto') ? undefined : xAxisDomain,
+                range: xAxisDomain.includes('auto') ? undefined : [...xAxisDomain],
                 autorange: xAxisDomain.includes('auto') ? true : undefined,
                 gridcolor: isDark ? '#334155' : '#e5e7eb',
                 showgrid: showGrid,
@@ -165,7 +166,7 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
             },
             yaxis: {
                 title: { text: yAxisLabel },
-                range: yAxisDomain.includes('auto') ? undefined : yAxisDomain,
+                range: yAxisDomain.includes('auto') ? undefined : [...yAxisDomain],
                 autorange: yAxisDomain.includes('auto') ? true : undefined,
                 gridcolor: isDark ? '#334155' : '#e5e7eb',
                 showgrid: showGrid,
@@ -177,14 +178,13 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
             legend: {
                 font: { color: isDark ? '#94a3b8' : '#6b7280' },
             },
-            dragmode: activeTool === 'pan' ? 'pan' : activeTool === 'select' ? 'select' : 'zoom',
             paper_bgcolor: isDark ? '#282c34' : '#ffffff',
             plot_bgcolor: isDark ? '#282c34' : '#ffffff',
             margin: { l: 60, r: 20, t: showTitle ? 40 : 20, b: 50 },
             shapes,
         };
     }, [
-        theme, title, showTitle, xAxisLabel, yAxisLabel, xAxisDomain, yAxisDomain, showLegend, activeTool, showGrid,
+        theme, title, showTitle, xAxisLabel, yAxisLabel, xAxisDomain, yAxisDomain, showLegend, showGrid,
         showResiduals, analysisResult, props.residualsData, independentVar, residualsColor, residualsWidth, residualsStyle, residualsOpacity
     ]);
     
@@ -221,7 +221,7 @@ export const PlotlyPanel: React.FC<PlotlyPanelProps> = (props) => {
             layout={layout}
             useResizeHandler={true}
             style={{ width: '100%', height: '100%' }}
-            config={{ responsive: true, displaylogo: false, modeBarButtonsToRemove: ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'pan2d'] }}
+            config={{ responsive: true, displaylogo: false }}
             onRelayout={handleRelayout}
             onSelected={handleSelected}
         />
